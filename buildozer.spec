@@ -1,5 +1,5 @@
 [app]
-title = Зерновой Мастер
+title = Grain Master
 package.name = grainmaster
 package.domain = org.example
 source.dir = .
