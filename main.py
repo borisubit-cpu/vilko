@@ -1,4 +1,3 @@
-main_code = r'''
 from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.label import Label
@@ -15,7 +14,7 @@ from grain_logic import GrainDistillingApp
 
 
 class MainApp(App):
-    title = "Зерновой Мастер"
+    title = "Grain Master"
 
     def build(self):
         self.logic = GrainDistillingApp()
@@ -46,11 +45,11 @@ class MainApp(App):
 
     def _build_recipes_tab(self):
         box = BoxLayout(orientation='vertical', padding=10, spacing=5)
-        self.recipes_list = ScrollView()
+        scroll = ScrollView()
         self.recipes_layout = GridLayout(cols=1, size_hint_y=None)
         self.recipes_layout.bind(minimum_height=self.recipes_layout.setter('height'))
-        self.recipes_list.add_widget(self.recipes_layout)
-        box.add_widget(self.recipes_list)
+        scroll.add_widget(self.recipes_layout)
+        box.add_widget(scroll)
         self._refresh_recipes()
         return box
 
@@ -59,10 +58,10 @@ class MainApp(App):
         all_recipes = []
         for cat, recipes in self.logic.recipes.items():
             for r in recipes:
-                all_recipes.append((cat, r))
+                all_recipes.append(r)
         for r in self.logic.custom_recipes:
-            all_recipes.append(('custom', r))
-        for i, (cat, r) in enumerate(all_recipes):
+            all_recipes.append(r)
+        for i, r in enumerate(all_recipes):
             btn = Button(text=f"{i+1}. {r['название']}", size_hint_y=None, height=dp(50))
             btn.bind(on_press=lambda x, idx=i: self._show_recipe_details(idx))
             self.recipes_layout.add_widget(btn)
@@ -71,10 +70,10 @@ class MainApp(App):
         all_recipes = []
         for cat, recipes in self.logic.recipes.items():
             for r in recipes:
-                all_recipes.append((cat, r))
+                all_recipes.append(r)
         for r in self.logic.custom_recipes:
-            all_recipes.append(('custom', r))
-        cat, recipe = all_recipes[idx]
+            all_recipes.append(r)
+        recipe = all_recipes[idx]
         details = f"Название: {recipe['название']}\n\n"
         details += f"Сложность: {recipe['сложность']}\n"
         details += f"Выход: {recipe['выход']}\n\n"
@@ -85,6 +84,7 @@ class MainApp(App):
         details += f"Дрожжи: {recipe['дрожжи']}\n"
         details += f"Температура: {recipe['температура']}°C\n"
         details += f"Брожение: {recipe['время_брожения']}\n"
+        details += f"\n{recipe['описание']}"
         popup = Popup(title=recipe['название'],
                       content=Label(text=details),
                       size_hint=(0.9, 0.8))
@@ -92,11 +92,13 @@ class MainApp(App):
 
     def _build_calc_tab(self):
         box = BoxLayout(orientation='vertical', padding=10, spacing=10)
-        self.grain_spinner = Spinner(text='Пшеница',
+        self.grain_spinner = Spinner(
+            text='Пшеница',
             values=['Пшеница', 'Ячмень', 'Рожь', 'Кукуруза', 'Овёс', 'Гречка'],
             size_hint_y=None, height=dp(50))
         box.add_widget(self.grain_spinner)
-        self.amount_input = TextInput(hint_text='Количество (кг)', multiline=False,
+        self.amount_input = TextInput(hint_text='Количество (кг)',
+                                       multiline=False,
                                        size_hint_y=None, height=dp(50))
         box.add_widget(self.amount_input)
         btn = Button(text='Рассчитать выход', size_hint_y=None, height=dp(50))
@@ -119,9 +121,9 @@ class MainApp(App):
 
     def _build_log_tab(self):
         box = BoxLayout(orientation='vertical', padding=10)
+        scroll = ScrollView()
         self.log_layout = GridLayout(cols=1, size_hint_y=None)
         self.log_layout.bind(minimum_height=self.log_layout.setter('height'))
-        scroll = ScrollView()
         scroll.add_widget(self.log_layout)
         box.add_widget(scroll)
         btn = Button(text='Обновить', size_hint_y=None, height=dp(50))
@@ -133,12 +135,14 @@ class MainApp(App):
     def _refresh_log(self):
         self.log_layout.clear_widgets()
         for entry in self.logic.brew_log.get_last_entries(20):
-            self.log_layout.add_widget(Label(text=f"{entry['date']} | {entry['recipe']}",
-                                              size_hint_y=None, height=dp(40)))
+            self.log_layout.add_widget(
+                Label(text=f"{entry['date']} | {entry['recipe']}",
+                      size_hint_y=None, height=dp(40)))
 
     def _build_help_tab(self):
         box = BoxLayout(orientation='vertical', padding=10, spacing=10)
-        self.question_input = TextInput(hint_text='Ваш вопрос...', multiline=False,
+        self.question_input = TextInput(hint_text='Ваш вопрос...',
+                                         multiline=False,
                                          size_hint_y=None, height=dp(50))
         box.add_widget(self.question_input)
         btn = Button(text='Спросить', size_hint_y=None, height=dp(50))
@@ -175,9 +179,3 @@ class MainApp(App):
 
 if __name__ == '__main__':
     MainApp().run()
-'''
-
-with open('main.py', 'w', encoding='utf-8') as f:
-    f.write(main_code)
-
-print("✅ Файл main.py создан")
