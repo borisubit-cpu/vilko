@@ -13,6 +13,7 @@ android.accept_sdk_license = True
 android.ndk = 25b
 android.api = 31
 android.minapi = 21
+p4a.branch = 6559b2af1dad52ae8438de21c291a1494969285c~1
 
 [buildozer]
 log_level = 2
