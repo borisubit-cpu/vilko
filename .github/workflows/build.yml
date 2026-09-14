@@ -34,12 +34,13 @@ jobs:
           file buildozer.spec
           echo "=== Размер ==="
           wc -c buildozer.spec
-      - name: Build APK
-        env:
-          BUILDOZER_WARN_ON_ROOT: 0
+            - name: Check bin folder
+        if: always()
         run: |
-          set +o pipefail
-          yes | buildozer android debug
+          echo "=== bin ==="
+          ls -la bin/ || echo "no bin"
+          echo "=== .buildozer logs ==="
+          find .buildozer -name "*.log" 2>/dev/null | head
 
       - name: Check bin folder
         run: |
