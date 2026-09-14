@@ -9,11 +9,9 @@ jobs:
   build-android:
     runs-on: ubuntu-22.04
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
@@ -25,30 +23,21 @@ jobs:
       - name: Install Buildozer
         run: |
           pip install --upgrade pip
-          pip install buildozer cython==0.29.36
+          pip install buildozer cython==0.29.33
 
-      - name: Show buildozer.spec
+      - name: Show spec before build
         run: |
-          echo "=== buildozer.spec содержимое ==="
+          echo "=== cat buildozer.spec ==="
           cat buildozer.spec
-          echo "=== размер ==="
-          wc -c buildozer.spec
 
       - name: Build APK
         run: |
-          set +o pipefail
           yes | buildozer android debug
 
-      - name: Check bin folder
-        if: always()
-        run: |
-          echo "=== Проверка bin ==="
-          ls -la bin/ || echo "❌ Папка bin не найдена"
-          ls -la bin/*.apk || echo "❌ APK не найден"
-
       - name: Upload APK
-        if: success()
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: grainmaster-apk
           path: bin/*.apk
+          if-no-files-found: error
