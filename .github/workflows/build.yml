@@ -7,12 +7,12 @@ on:
 
 jobs:
   build-android:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Set up Python 3.11
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
@@ -25,30 +25,29 @@ jobs:
       - name: Install Buildozer
         run: |
           pip install --upgrade pip
-          pip install buildozer cython==0.29.33
+          pip install buildozer cython==0.29.36
+
       - name: Show buildozer.spec
         run: |
-          echo "=== Содержимое buildozer.spec ==="
+          echo "=== buildozer.spec содержимое ==="
           cat buildozer.spec
-          echo "=== Проверка кодировки ==="
-          file buildozer.spec
-          echo "=== Размер ==="
+          echo "=== размер ==="
           wc -c buildozer.spec
-            - name: Check bin folder
-        if: always()
+
+      - name: Build APK
         run: |
-          echo "=== bin ==="
-          ls -la bin/ || echo "no bin"
-          echo "=== .buildozer logs ==="
-          find .buildozer -name "*.log" 2>/dev/null | head
+          set +o pipefail
+          yes | buildozer android debug
 
       - name: Check bin folder
+        if: always()
         run: |
-          echo "=== Проверка папки bin ==="
+          echo "=== Проверка bin ==="
           ls -la bin/ || echo "❌ Папка bin не найдена"
-          ls -la bin/*.apk || echo "❌ APK файл не найден"
+          ls -la bin/*.apk || echo "❌ APK не найден"
 
       - name: Upload APK
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: grainmaster-apk
