@@ -1,7 +1,7 @@
 [app]
 title = Grain Master
 package.name = grainmaster
-package.domain = org.example
+package.domain = org.grainmaster
 source.dir = .
 source.include_exts = py,kv,json
 version = 1.0
@@ -19,4 +19,3 @@ minapi = 21
 android.accept_sdk_license = True
 android.archs = arm64-v8a
 android.ndk = 25b
-p4a.branch = master
