@@ -31,6 +31,8 @@ jobs:
           cat buildozer.spec
 
       - name: Build APK
+        env:
+          JAVA_HOME: /usr/lib/jvm/temurin-17-jdk-amd64
         run: |
           yes | buildozer android debug
 
