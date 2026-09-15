@@ -1,20 +1,22 @@
 [app]
-title = GrainMaster
-package.name = grainmaster
-package.domain = com.grainmaster
+title = Vilko
+package.name = vilko
+package.domain = org.vilko
 source.dir = .
-source.include_exts = py
+source.include_exts = py,png,jpg,kv,atlas
 version = 1.0
-requirements = python3,kivy
+
+# Явно указываем совместимые версии Python (hostpython3 и python3 должны совпадать)
+requirements = python3==3.13.9,hostpython3==3.13.9,kivy==2.3.1,openssl,sqlite3,pyjnius,android,setuptools,certifi,chardet,idna,requests,urllib3
+
 orientation = portrait
 fullscreen = 0
-android.archs = arm64-v8a
-android.accept_sdk_license = True
+android.permissions = INTERNET
+
+# Рекомендуемая версия NDK для стабильной сборки
 android.ndk = 25c
 android.api = 31
 android.minapi = 21
-p4a.branch = develop
+android.archs = arm64-v8a
 
-[buildozer]
-log_level = 2
-warn_on_root = 0
+# Остальные настройки по умолчанию
