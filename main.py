@@ -10,6 +10,7 @@ from kivy.uix.popup import Popup
 from kivy.uix.spinner import Spinner
 from kivy.metrics import dp
 from kivy.clock import Clock
+
 from grain_logic import GrainDistillingApp
 
 GRAIN_DISPLAY_NAMES = ['Пшеница', 'Ячмень', 'Рожь', 'Кукуруза', 'Овёс', 'Гречка']
@@ -24,24 +25,20 @@ def info_popup(title, message):
     popup.open()
     return popup
 
-class TimersTab(BoxLayout):
-    """Вкладка с несколькими таймерами. Каждый можно назвать, поставить на паузу и удалить."""
 
+class TimersTab(BoxLayout):
+    """Вкладка с несколькими таймерами."""
     def __init__(self, **kwargs):
         super().__init__(orientation='vertical', padding=10, spacing=8, **kwargs)
-        self.timers = []  # список активных таймеров
+        self.timers = []
 
-        # --- Форма добавления нового таймера ---
         form = BoxLayout(size_hint_y=None, height=dp(45), spacing=6)
-
         self.name_input = TextInput(hint_text='Название', multiline=False, size_hint_x=0.45)
         self.h_input = TextInput(hint_text='ч', multiline=False, input_filter='int', size_hint_x=0.15)
         self.m_input = TextInput(hint_text='мин', multiline=False, input_filter='int', size_hint_x=0.15)
         self.s_input = TextInput(hint_text='сек', multiline=False, input_filter='int', size_hint_x=0.15)
-
         add_btn = Button(text='+', size_hint_x=None, width=dp(50))
         add_btn.bind(on_press=self.add_timer)
-
         form.add_widget(self.name_input)
         form.add_widget(self.h_input)
         form.add_widget(self.m_input)
@@ -49,14 +46,12 @@ class TimersTab(BoxLayout):
         form.add_widget(add_btn)
         self.add_widget(form)
 
-        # --- Список активных таймеров ---
         scroll = ScrollView()
         self.list_layout = GridLayout(cols=1, size_hint_y=None, spacing=4)
         self.list_layout.bind(minimum_height=self.list_layout.setter('height'))
         scroll.add_widget(self.list_layout)
         self.add_widget(scroll)
 
-        # Запускаем «тик» каждую секунду
         Clock.schedule_interval(self._tick, 1)
 
     def add_timer(self, instance):
@@ -74,17 +69,11 @@ class TimersTab(BoxLayout):
         row = BoxLayout(size_hint_y=None, height=dp(50), spacing=4)
         label = Label(text=f"{name}: {self._fmt(total)}", halign='left', valign='middle')
         label.bind(size=lambda inst, val: setattr(inst, 'text_size', (val[0], val[1])))
-
         pause_btn = Button(text='⏸', size_hint_x=None, width=dp(55))
         del_btn = Button(text='✕', size_hint_x=None, width=dp(55))
 
-        timer = {
-            'name': name,
-            'remaining': total,
-            'running': True,
-            'label': label,
-            'row': row,
-        }
+        timer = {'name': name, 'remaining': total, 'running': True,
+                 'label': label, 'row': row}
 
         def toggle(inst, t=timer):
             t['running'] = not t['running']
@@ -102,11 +91,9 @@ class TimersTab(BoxLayout):
         row.add_widget(label)
         row.add_widget(pause_btn)
         row.add_widget(del_btn)
-
         self.list_layout.add_widget(row)
         self.timers.append(timer)
 
-        # Очистить форму
         self.name_input.text = ''
         self.h_input.text = ''
         self.m_input.text = ''
@@ -127,11 +114,9 @@ class TimersTab(BoxLayout):
         return f"{h:02d}:{m:02d}:{s:02d}"
 
     def _notify(self, name):
-        popup = Popup(
-            title='⏰ Время вышло!',
-            content=Label(text=f"Таймер «{name}» завершён"),
-            size_hint=(0.75, 0.3),
-        )
+        popup = Popup(title='⏰ Время вышло!',
+                       content=Label(text=f"Таймер «{name}» завершён"),
+                       size_hint=(0.75, 0.3))
         popup.open()
 
 
@@ -139,10 +124,7 @@ class MainApp(App):
     title = "Grain Master"
 
     def build(self):
-        # На Android текущая рабочая директория не гарантированно доступна для
-        # записи, поэтому храним все JSON-данные в user_data_dir приложения.
         self.logic = GrainDistillingApp(data_dir=self.user_data_dir)
-
         self.root = TabbedPanel()
         self.root.do_default_tab = False
 
@@ -161,11 +143,11 @@ class MainApp(App):
         tab_log = TabbedPanelItem(text='Журнал')
         tab_log.content = self._build_log_tab()
         self.root.add_widget(tab_log)
-      
+
         tab_timers = TabbedPanelItem(text='Таймеры')
         tab_timers.content = TimersTab()
         self.root.add_widget(tab_timers)
-      
+
         tab_yeast = TabbedPanelItem(text='Дрожжи')
         tab_yeast.content = self._build_yeast_tab()
         self.root.add_widget(tab_yeast)
@@ -173,6 +155,10 @@ class MainApp(App):
         tab_help = TabbedPanelItem(text='Помощь')
         tab_help.content = self._build_help_tab()
         self.root.add_widget(tab_help)
+
+        tab_instr = TabbedPanelItem(text='Инструкция')
+        tab_instr.content = self._build_instruction_tab()
+        self.root.add_widget(tab_instr)
 
         tab_links = TabbedPanelItem(text='Ссылки')
         tab_links.content = self._build_links_tab()
@@ -204,7 +190,6 @@ class MainApp(App):
             btn = Button(text=f"{i+1}. {r['название']}")
             btn.bind(on_press=lambda x, idx=i: self._show_recipe_details(idx))
             row.add_widget(btn)
-            # Пользовательские рецепты идут в конце списка - для них можно удалять
             if i >= n_builtin:
                 del_btn = Button(text='✕', size_hint_x=None, width=dp(45))
                 custom_idx = i - n_builtin
@@ -240,7 +225,6 @@ class MainApp(App):
 
     def _open_add_recipe_form(self):
         box = BoxLayout(orientation='vertical', padding=10, spacing=6)
-
         name_in = TextInput(hint_text='Название рецепта', multiline=False, size_hint_y=None, height=dp(45))
         grain_spinner = Spinner(text='Пшеница', values=GRAIN_DISPLAY_NAMES, size_hint_y=None, height=dp(45))
         amount_in = TextInput(hint_text='Количество зерна (кг)', multiline=False, size_hint_y=None, height=dp(45))
@@ -255,7 +239,6 @@ class MainApp(App):
 
         save_btn = Button(text='Сохранить рецепт', size_hint_y=None, height=dp(50))
         box.add_widget(save_btn)
-
         popup = Popup(title='Новый рецепт', content=box, size_hint=(0.9, 0.9))
 
         def save(instance):
@@ -478,7 +461,6 @@ class MainApp(App):
     # ==================== ЖУРНАЛ ====================
     def _build_log_tab(self):
         box = BoxLayout(orientation='vertical', padding=10, spacing=6)
-
         self.log_stats_label = Label(text='', size_hint_y=None, height=dp(40))
         box.add_widget(self.log_stats_label)
 
@@ -657,6 +639,61 @@ class MainApp(App):
             self.help_result.text = ans if ans else ("Не знаю ответа. Попробуйте спросить про: "
                                                        "брагу, головы, хвосты, осахаривание, "
                                                        "гидромодуль, дрожжи, температуру.")
+
+    # ==================== ИНСТРУКЦИЯ ====================
+    def _build_instruction_tab(self):
+        box = BoxLayout(orientation='vertical', padding=10, spacing=10)
+
+        save_btn = Button(text='💾 Сохранить инструкцию в HTML', size_hint_y=None, height=dp(50))
+        save_btn.bind(on_press=self._save_instruction_html)
+        box.add_widget(save_btn)
+
+        scroll = ScrollView()
+        label = Label(text=self._instruction_text(), size_hint_y=None,
+                      halign='left', valign='top', markup=True)
+        label.bind(texture_size=lambda inst, val: setattr(inst, 'height', val[1]))
+        label.bind(width=lambda inst, val: setattr(inst, 'text_size', (val, None)))
+        scroll.add_widget(label)
+        box.add_widget(scroll)
+        return box
+
+    def _instruction_text(self):
+        return (
+            "[b][size=20]Зерновой Мастер — инструкция[/size][/b]\n\n"
+
+            "[b][size=16]Разделы приложения[/size][/b]\n"
+            "• [b]Рецепты[/b] — 20 встроенных рецептов + добавление своих\n"
+            "• [b]Калькуляторы[/b] — выход спирта, вода, ферменты, дрожжи, головы\n"
+            "• [b]План варки[/b] — пошаговый план по выбранному рецепту\n"
+            "• [b]Журнал[/b] — статистика, оценки, заметки по каждой варке\n"
+            "• [b]Таймеры[/b] — несколько параллельных таймеров с уведомлением\n"
+            "• [b]Дрожжи[/b] — база с характеристиками и рекомендациями\n"
+            "• [b]Помощь[/b] — быстрые ответы на частые вопросы\n"
+            "• [b]Ссылки[/b] — Telegram-канал и форумы\n\n"
+
+            "[b][size=16]Как начать[/size][/b]\n"
+            "1. Выберите рецепт в разделе «Рецепты» или добавьте свой\n"
+            "2. Откройте «План варки», выберите рецепт — получите пошаговую инструкцию\n"
+            "3. Отмечайте процесс в «Журнале»: заметки, оценки, даты брожения\n"
+            "4. Используйте «Таймеры» для контроля пауз и брожения\n\n"
+
+            "[b][size=16]Полезные особенности[/size][/b]\n"
+            "• Все данные хранятся в JSON-файлах на устройстве\n"
+            "• Пользовательские рецепты сохраняются отдельно\n"
+            "• Журнал можно редактировать и очищать\n"
+            "• При изменении записи фиксируется дата и время\n\n"
+
+            "[color=#b8860b][b]⚠ Внимание:[/b] Соблюдайте законодательство вашей страны "
+            "в отношении производства алкогольных напитков.[/color]"
+        )
+
+    def _save_instruction_html(self, instance):
+        try:
+            path = self.logic.export_instruction_to_html()
+            info_popup('Инструкция сохранена',
+                       f"Файл: {path}\n\n(в папке с данными приложения)")
+        except Exception as e:
+            info_popup('Ошибка', str(e))
 
     # ==================== ССЫЛКИ ====================
     def _build_links_tab(self):
