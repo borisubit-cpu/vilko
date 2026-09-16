@@ -9,7 +9,7 @@ from kivy.uix.gridlayout import GridLayout
 from kivy.uix.popup import Popup
 from kivy.uix.spinner import Spinner
 from kivy.metrics import dp
-
+from kivy.clock import Clock
 from grain_logic import GrainDistillingApp
 
 GRAIN_DISPLAY_NAMES = ['Пшеница', 'Ячмень', 'Рожь', 'Кукуруза', 'Овёс', 'Гречка']
@@ -23,6 +23,116 @@ def info_popup(title, message):
                    size_hint=(0.85, 0.6))
     popup.open()
     return popup
+
+class TimersTab(BoxLayout):
+    """Вкладка с несколькими таймерами. Каждый можно назвать, поставить на паузу и удалить."""
+
+    def __init__(self, **kwargs):
+        super().__init__(orientation='vertical', padding=10, spacing=8, **kwargs)
+        self.timers = []  # список активных таймеров
+
+        # --- Форма добавления нового таймера ---
+        form = BoxLayout(size_hint_y=None, height=dp(45), spacing=6)
+
+        self.name_input = TextInput(hint_text='Название', multiline=False, size_hint_x=0.45)
+        self.h_input = TextInput(hint_text='ч', multiline=False, input_filter='int', size_hint_x=0.15)
+        self.m_input = TextInput(hint_text='мин', multiline=False, input_filter='int', size_hint_x=0.15)
+        self.s_input = TextInput(hint_text='сек', multiline=False, input_filter='int', size_hint_x=0.15)
+
+        add_btn = Button(text='+', size_hint_x=None, width=dp(50))
+        add_btn.bind(on_press=self.add_timer)
+
+        form.add_widget(self.name_input)
+        form.add_widget(self.h_input)
+        form.add_widget(self.m_input)
+        form.add_widget(self.s_input)
+        form.add_widget(add_btn)
+        self.add_widget(form)
+
+        # --- Список активных таймеров ---
+        scroll = ScrollView()
+        self.list_layout = GridLayout(cols=1, size_hint_y=None, spacing=4)
+        self.list_layout.bind(minimum_height=self.list_layout.setter('height'))
+        scroll.add_widget(self.list_layout)
+        self.add_widget(scroll)
+
+        # Запускаем «тик» каждую секунду
+        Clock.schedule_interval(self._tick, 1)
+
+    def add_timer(self, instance):
+        name = self.name_input.text.strip() or 'Таймер'
+        try:
+            h = int(self.h_input.text or 0)
+            m = int(self.m_input.text or 0)
+            s = int(self.s_input.text or 0)
+        except ValueError:
+            return
+        total = h * 3600 + m * 60 + s
+        if total <= 0:
+            return
+
+        row = BoxLayout(size_hint_y=None, height=dp(50), spacing=4)
+        label = Label(text=f"{name}: {self._fmt(total)}", halign='left', valign='middle')
+        label.bind(size=lambda inst, val: setattr(inst, 'text_size', (val[0], val[1])))
+
+        pause_btn = Button(text='⏸', size_hint_x=None, width=dp(55))
+        del_btn = Button(text='✕', size_hint_x=None, width=dp(55))
+
+        timer = {
+            'name': name,
+            'remaining': total,
+            'running': True,
+            'label': label,
+            'row': row,
+        }
+
+        def toggle(inst, t=timer):
+            t['running'] = not t['running']
+            inst.text = '▶' if not t['running'] else '⏸'
+
+        def remove(inst, t=timer):
+            if t in self.timers:
+                self.timers.remove(t)
+            if t['row'] in self.list_layout.children:
+                self.list_layout.remove_widget(t['row'])
+
+        pause_btn.bind(on_press=toggle)
+        del_btn.bind(on_press=remove)
+
+        row.add_widget(label)
+        row.add_widget(pause_btn)
+        row.add_widget(del_btn)
+
+        self.list_layout.add_widget(row)
+        self.timers.append(timer)
+
+        # Очистить форму
+        self.name_input.text = ''
+        self.h_input.text = ''
+        self.m_input.text = ''
+        self.s_input.text = ''
+
+    def _tick(self, dt):
+        for t in list(self.timers):
+            if t['running'] and t['remaining'] > 0:
+                t['remaining'] -= 1
+                t['label'].text = f"{t['name']}: {self._fmt(t['remaining'])}"
+                if t['remaining'] == 0:
+                    t['running'] = False
+                    self._notify(t['name'])
+
+    def _fmt(self, seconds):
+        h, r = divmod(seconds, 3600)
+        m, s = divmod(r, 60)
+        return f"{h:02d}:{m:02d}:{s:02d}"
+
+    def _notify(self, name):
+        popup = Popup(
+            title='⏰ Время вышло!',
+            content=Label(text=f"Таймер «{name}» завершён"),
+            size_hint=(0.75, 0.3),
+        )
+        popup.open()
 
 
 class MainApp(App):
