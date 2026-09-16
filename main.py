@@ -439,7 +439,7 @@ class MainApp(App):
         if names and self.plan_spinner.text not in names:
             self.plan_spinner.text = names[0]
 
-    def _generate_plan(self, instance):
+        def _generate_plan(self, instance):
         self.plan_layout.clear_widgets()
         all_recipes = self.logic.get_all_recipes()
         recipe = next((r for r in all_recipes if r['название'] == self.plan_spinner.text), None)
@@ -451,6 +451,30 @@ class MainApp(App):
             self.plan_layout.add_widget(Label(text=f"Ошибка построения плана: {e}",
                                                size_hint_y=None, height=dp(60)))
             return
+
+        # ===== Автоматически добавляем запись в журнал =====
+        try:
+            self.logic.brew_log.add_entry(
+                recipe_name=recipe['название'],
+                grain_bill=recipe['зерно'].copy(),
+                og=None, fg=None, yield_ml=None,
+                notes=f"Запланировано: {recipe['название']}",
+            )
+            # Обновляем вкладку Журнал, если она уже построена
+            try:
+                self._refresh_log()
+            except Exception:
+                pass
+
+            note = Label(
+                text=f"✅ Запись «{recipe['название']}» добавлена в журнал",
+                size_hint_y=None, height=dp(30), color=(0.2, 0.7, 0.2, 1)
+            )
+            self.plan_layout.add_widget(note)
+        except Exception as e:
+            print(f"Не удалось записать в журнал: {e}")
+        # ===================================================
+
         for step in plan:
             text = f"День {step['день']} | {step['этап']}\n{step['действие']}\n⏰ {step['время']}"
             lbl = Label(text=text, size_hint_y=None, halign='left', valign='top')
