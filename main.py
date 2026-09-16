@@ -520,7 +520,8 @@ class MainApp(App):
         for pos, entry in enumerate(entries):
             real_index = total - 1 - pos
             row = BoxLayout(size_hint_y=None, height=dp(40), spacing=4)
-            label_text = f"{entry['date']} | {entry['recipe']}"
+            rating_stars = '★' * (entry.get('rating') or 0)
+            label_text = f"{entry['date']} | {entry['recipe']} {rating_stars}""
             btn = Button(text=label_text)
             btn.bind(on_press=lambda x, idx=real_index: self._show_log_entry(idx))
             row.add_widget(btn)
@@ -529,17 +530,98 @@ class MainApp(App):
             row.add_widget(del_btn)
             self.log_layout.add_widget(row)
 
-    def _show_log_entry(self, index):
+        def _show_log_entry(self, index):
         entry = self.logic.brew_log.get_entry(index)
         if not entry:
             return
-        text = (f"Рецепт: {entry['recipe']}\nДата: {entry['date']}\n"
-                f"Начальная плотность: {entry.get('original_gravity')}\n"
-                f"Конечная плотность: {entry.get('final_gravity')}\n"
-                f"Выход: {entry.get('alcohol_yield_ml')} мл\n"
-                f"Оценка: {entry.get('rating')}\n\n"
-                f"Заметки: {entry.get('notes') or '-'}")
-        info_popup(entry['recipe'], text)
+
+        box = BoxLayout(orientation='vertical', padding=12, spacing=8)
+
+        # --- Информация (только для чтения) ---
+        info = Label(
+            text=(f"Рецепт: {entry['recipe']}\n"
+                  f"Дата создания: {entry['date']}\n"
+                  f"OG: {entry.get('original_gravity')}  |  FG: {entry.get('final_gravity')}\n"
+                  f"Выход: {entry.get('alcohol_yield_ml')} мл"),
+            size_hint_y=None, height=dp(90), halign='left', valign='top')
+        info.bind(size=lambda inst, val: setattr(inst, 'text_size', (val[0], val[1])))
+        box.add_widget(info)
+
+        # --- Заметки ---
+        box.add_widget(Label(text='Заметки:', size_hint_y=None, height=dp(25)))
+        notes_in = TextInput(text=entry.get('notes') or '', multiline=True,
+                             size_hint_y=None, height=dp(90))
+        box.add_widget(notes_in)
+
+        # --- Рейтинг звёздочками ---
+        box.add_widget(Label(text='Оценка рецепта:', size_hint_y=None, height=dp(25)))
+        stars_row = BoxLayout(size_hint_y=None, height=dp(50), spacing=4)
+
+        # Храним текущий рейтинг в изменяемом контейнере (closure)
+        current = {'rating': entry.get('rating') or 0}
+        star_buttons = []
+
+        def refresh_stars():
+            for i, b in enumerate(star_buttons, 1):
+                b.text = '★' if i <= current['rating'] else '☆'
+
+        def make_star_handler(value):
+            def handler(inst):
+                current['rating'] = value
+                refresh_stars()
+            return handler
+
+        for i in range(1, 6):
+            b = Button(text='☆', size_hint_x=None, width=dp(55))
+            b.bind(on_press=make_star_handler(i))
+            star_buttons.append(b)
+            stars_row.add_widget(b)
+        refresh_stars()
+        box.add_widget(stars_row)
+
+        # --- Даты брожения ---
+        box.add_widget(Label(text='Начало брожения (ГГГГ-ММ-ДД ЧЧ:ММ):',
+                             size_hint_y=None, height=dp(25)))
+        start_in = TextInput(text=entry.get('fermentation_start') or '',
+                             hint_text='например 2025-10-15 18:30',
+                             multiline=False, size_hint_y=None, height=dp(45))
+        box.add_widget(start_in)
+
+        box.add_widget(Label(text='Окончание брожения (ГГГГ-ММ-ДД ЧЧ:ММ):',
+                             size_hint_y=None, height=dp(25)))
+        end_in = TextInput(text=entry.get('fermentation_end') or '',
+                           hint_text='например 2025-10-22 12:00',
+                           multiline=False, size_hint_y=None, height=dp(45))
+        box.add_widget(end_in)
+
+        # --- Кнопка сохранения ---
+        save_btn = Button(text='💾 Сохранить изменения', size_hint_y=None, height=dp(50))
+        box.add_widget(save_btn)
+
+        popup = Popup(title=f"Запись: {entry['recipe']}",
+                       content=box, size_hint=(0.92, 0.92))
+
+        def save(instance):
+            notes_val = notes_in.text.strip()
+            self.logic.brew_log.add_notes(index, notes_val)
+
+            if current['rating'] >= 1:
+                self.logic.brew_log.set_rating(index, current['rating'])
+
+            s = start_in.text.strip()
+            if s:
+                self.logic.brew_log.set_fermentation_start(index, s)
+
+            e = end_in.text.strip()
+            if e:
+                self.logic.brew_log.set_fermentation_end(index, e)
+
+            popup.dismiss()
+            self._refresh_log()
+            info_popup('Сохранено', f"Запись «{entry['recipe']}» обновлена")
+
+        save_btn.bind(on_press=save)
+        popup.open()
 
     def _delete_log_entry(self, index):
         self.logic.brew_log.delete_entry(index)
