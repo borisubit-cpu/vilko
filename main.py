@@ -521,7 +521,7 @@ class MainApp(App):
             real_index = total - 1 - pos
             row = BoxLayout(size_hint_y=None, height=dp(40), spacing=4)
             rating_stars = '★' * (entry.get('rating') or 0)
-            label_text = f"{entry['date']} | {entry['recipe']} {rating_stars}""
+            label_text = f"{entry['date']} | {entry['recipe']} {rating_stars}"
             btn = Button(text=label_text)
             btn.bind(on_press=lambda x, idx=real_index: self._show_log_entry(idx))
             row.add_widget(btn)
@@ -530,7 +530,7 @@ class MainApp(App):
             row.add_widget(del_btn)
             self.log_layout.add_widget(row)
 
-        def _show_log_entry(self, index):
+    def _show_log_entry(self, index):
         entry = self.logic.brew_log.get_entry(index)
         if not entry:
             return
@@ -557,7 +557,6 @@ class MainApp(App):
         box.add_widget(Label(text='Оценка рецепта:', size_hint_y=None, height=dp(25)))
         stars_row = BoxLayout(size_hint_y=None, height=dp(50), spacing=4)
 
-        # Храним текущий рейтинг в изменяемом контейнере (closure)
         current = {'rating': entry.get('rating') or 0}
         star_buttons = []
 
