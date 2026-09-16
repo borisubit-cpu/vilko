@@ -161,7 +161,11 @@ class MainApp(App):
         tab_log = TabbedPanelItem(text='Журнал')
         tab_log.content = self._build_log_tab()
         self.root.add_widget(tab_log)
-
+      
+        tab_timers = TabbedPanelItem(text='Таймеры')
+        tab_timers.content = TimersTab()
+        self.root.add_widget(tab_timers)
+      
         tab_yeast = TabbedPanelItem(text='Дрожжи')
         tab_yeast.content = self._build_yeast_tab()
         self.root.add_widget(tab_yeast)
