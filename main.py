@@ -28,6 +28,7 @@ def info_popup(title, message):
 
 class TimersTab(BoxLayout):
     """Вкладка с несколькими таймерами."""
+
     def __init__(self, **kwargs):
         super().__init__(orientation='vertical', padding=10, spacing=8, **kwargs)
         self.timers = []
@@ -439,7 +440,7 @@ class MainApp(App):
         if names and self.plan_spinner.text not in names:
             self.plan_spinner.text = names[0]
 
-        def _generate_plan(self, instance):
+    def _generate_plan(self, instance):
         self.plan_layout.clear_widgets()
         all_recipes = self.logic.get_all_recipes()
         recipe = next((r for r in all_recipes if r['название'] == self.plan_spinner.text), None)
@@ -460,7 +461,6 @@ class MainApp(App):
                 og=None, fg=None, yield_ml=None,
                 notes=f"Запланировано: {recipe['название']}",
             )
-            # Обновляем вкладку Журнал, если она уже построена
             try:
                 self._refresh_log()
             except Exception:
