@@ -165,6 +165,9 @@ class MainApp(App):
         tab_links.content = self._build_links_tab()
         self.root.add_widget(tab_links)
 
+        # Проверяем завершённое брожение через 2 секунды после запуска
+        Clock.schedule_once(lambda dt: self._check_fermentation_notifications(), 2)
+
         return self.root
 
     # ==================== РЕЦЕПТЫ ====================
