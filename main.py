@@ -200,6 +200,20 @@ class MainApp(App):
                 del_btn.bind(on_press=lambda x, ci=custom_idx: self._delete_custom_recipe(ci))
                 row.add_widget(del_btn)
             self.recipes_layout.add_widget(row)
+
+    def _save_plan_html(self, instance):
+        plan = getattr(self, '_last_plan', None)
+        name = getattr(self, '_last_plan_recipe_name', None)
+        if not plan or not name:
+            info_popup('Нечего сохранять', 'Сначала сгенерируйте план.')
+            return
+        try:
+            path = self.logic.export_plan_to_html(plan, name)
+            info_popup('План сохранён',
+                       f"Файл: {path}\n\n(в папке с данными приложения)")
+        except Exception as e:
+            info_popup('Ошибка', str(e))
+
     def _check_fermentation_notifications(self):
         """Проверяет записи журнала на завершённое брожение и показывает попап."""
         try:
