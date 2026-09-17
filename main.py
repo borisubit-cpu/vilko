@@ -70,7 +70,7 @@ class TimersTab(BoxLayout):
         row = BoxLayout(size_hint_y=None, height=dp(50), spacing=4)
         label = Label(text=f"{name}: {self._fmt(total)}", halign='left', valign='middle')
         label.bind(size=lambda inst, val: setattr(inst, 'text_size', (val[0], val[1])))
-                pause_btn = Button(text='Пауза', size_hint_x=None, width=dp(80))
+        pause_btn = Button(text='Пауза', size_hint_x=None, width=dp(90))
         del_btn = Button(text='X', size_hint_x=None, width=dp(50))
 
         timer = {'name': name, 'remaining': total, 'running': True,
@@ -192,7 +192,7 @@ class MainApp(App):
             btn.bind(on_press=lambda x, idx=i: self._show_recipe_details(idx))
             row.add_widget(btn)
             if i >= n_builtin:
-                del_btn = Button(text='✕', size_hint_x=None, width=dp(45))
+                del_btn = Button(text='X', size_hint_x=None, width=dp(45))
                 custom_idx = i - n_builtin
                 del_btn.bind(on_press=lambda x, ci=custom_idx: self._delete_custom_recipe(ci))
                 row.add_widget(del_btn)
@@ -467,7 +467,7 @@ class MainApp(App):
                 pass
 
             note = Label(
-                text=f"✅ Запись «{recipe['название']}» добавлена в журнал",
+                text=f"Запись «{recipe['название']}» добавлена в журнал",
                 size_hint_y=None, height=dp(30), color=(0.2, 0.7, 0.2, 1)
             )
             self.plan_layout.add_widget(note)
@@ -476,7 +476,7 @@ class MainApp(App):
         # ===================================================
 
         for step in plan:
-            text = f"День {step['день']} | {step['этап']}\n{step['действие']}\n⏰ {step['время']}"
+            text = f"День {step['день']} | {step['этап']}\n{step['действие']}\nВремя: {step['время']}"
             lbl = Label(text=text, size_hint_y=None, halign='left', valign='top')
             lbl.bind(texture_size=lambda inst, val: setattr(inst, 'height', val[1] + dp(10)))
             lbl.bind(width=lambda inst, val: setattr(inst, 'text_size', (val, None)))
@@ -520,13 +520,13 @@ class MainApp(App):
         for pos, entry in enumerate(entries):
             real_index = total - 1 - pos
             row = BoxLayout(size_hint_y=None, height=dp(40), spacing=4)
-                        rating = entry.get('rating')
+            rating = entry.get('rating')
             rating_str = f" [{rating}/5]" if rating else ""
             label_text = f"{entry['date']} | {entry['recipe']}{rating_str}"
             btn = Button(text=label_text)
             btn.bind(on_press=lambda x, idx=real_index: self._show_log_entry(idx))
             row.add_widget(btn)
-            del_btn = Button(text='✕', size_hint_x=None, width=dp(45))
+            del_btn = Button(text='X', size_hint_x=None, width=dp(45))
             del_btn.bind(on_press=lambda x, idx=real_index: self._delete_log_entry(idx))
             row.add_widget(del_btn)
             self.log_layout.add_widget(row)
@@ -554,7 +554,7 @@ class MainApp(App):
                              size_hint_y=None, height=dp(90))
         box.add_widget(notes_in)
 
-                # --- Рейтинг: 1..5 ---
+        # --- Рейтинг: 1..5 ---
         box.add_widget(Label(text='Оценка рецепта (1 — плохо, 5 — отлично):',
                              size_hint_y=None, height=dp(25)))
         stars_row = BoxLayout(size_hint_y=None, height=dp(50), spacing=4)
@@ -565,9 +565,9 @@ class MainApp(App):
         def refresh_buttons():
             for i, b in enumerate(rating_buttons, 1):
                 if i == current['rating']:
-                    b.background_color = (0.2, 0.7, 0.2, 1)  # зелёный для выбранной
+                    b.background_color = (0.2, 0.7, 0.2, 1)
                 else:
-                    b.background_color = (0.5, 0.5, 0.5, 1)  # серый для остальных
+                    b.background_color = (0.5, 0.5, 0.5, 1)
 
         def make_handler(value):
             def handler(inst):
@@ -582,6 +582,8 @@ class MainApp(App):
             stars_row.add_widget(b)
         refresh_buttons()
         box.add_widget(stars_row)
+
+        # --- Даты брожения ---
         box.add_widget(Label(text='Начало брожения (ГГГГ-ММ-ДД ЧЧ:ММ):',
                              size_hint_y=None, height=dp(25)))
         start_in = TextInput(text=entry.get('fermentation_start') or '',
@@ -597,7 +599,7 @@ class MainApp(App):
         box.add_widget(end_in)
 
         # --- Кнопка сохранения ---
-        save_btn = Button(text='💾 Сохранить изменения', size_hint_y=None, height=dp(50))
+        save_btn = Button(text='Сохранить изменения', size_hint_y=None, height=dp(50))
         box.add_widget(save_btn)
 
         popup = Popup(title=f"Запись: {entry['recipe']}",
@@ -752,7 +754,7 @@ class MainApp(App):
     def _build_instruction_tab(self):
         box = BoxLayout(orientation='vertical', padding=10, spacing=10)
 
-        save_btn = Button(text='💾 Сохранить инструкцию в HTML', size_hint_y=None, height=dp(50))
+        save_btn = Button(text='Сохранить инструкцию в HTML', size_hint_y=None, height=dp(50))
         save_btn.bind(on_press=self._save_instruction_html)
         box.add_widget(save_btn)
 
@@ -791,7 +793,7 @@ class MainApp(App):
             "• Журнал можно редактировать и очищать\n"
             "• При изменении записи фиксируется дата и время\n\n"
 
-            "[color=#b8860b][b]⚠ Внимание:[/b] Соблюдайте законодательство вашей страны "
+            "[color=#b8860b][b]Внимание:[/b] Соблюдайте законодательство вашей страны "
             "в отношении производства алкогольных напитков.[/color]"
         )
 
