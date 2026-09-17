@@ -492,6 +492,11 @@ class MainApp(App):
                                                size_hint_y=None, height=dp(60)))
             return
 
+              # Запоминаем последний сгенерированный план и рецепт
+        self._last_plan = plan
+        self._last_plan_recipe_name = recipe['название']
+        self.plan_save_btn.disabled = False
+
         # ===== Автоматически добавляем запись в журнал =====
         try:
             self.logic.brew_log.add_entry(
