@@ -141,68 +141,6 @@ class MainApp(App):
         tab_plan.content = self._build_plan_tab()
         self.root.add_widget(tab_plan)
 
-          def _build_stats_tab(self):
-        box = BoxLayout(orientation='vertical', padding=10, spacing=10)
-
-        refresh_btn = Button(text='Обновить статистику',
-                             size_hint_y=None, height=dp(50))
-        refresh_btn.bind(on_press=lambda x: self._refresh_stats())
-        box.add_widget(refresh_btn)
-
-        scroll = ScrollView()
-        self.stats_label = Label(text='', size_hint_y=None,
-                                 halign='left', valign='top')
-        self.stats_label.bind(texture_size=lambda inst, val: setattr(inst, 'height', val[1]))
-        self.stats_label.bind(width=lambda inst, val: setattr(inst, 'text_size', (val, None)))
-        scroll.add_widget(self.stats_label)
-        box.add_widget(scroll)
-        self._refresh_stats()
-        return box
-
-    def _refresh_stats(self):
-        entries = self.logic.brew_log.entries
-        if not entries:
-            self.stats_label.text = "Журнал пуст — статистики нет."
-            return
-
-        lines = []
-
-        stats = self.logic.brew_log.get_statistics()
-        lines.append("=== Общая статистика ===")
-        lines.append(f"Всего варок: {stats['total_brews']}")
-        lines.append(f"Средний выход: {stats['avg_yield']:.0f} мл")
-        lines.append(f"Последняя варка: {stats['last_brew']}")
-        lines.append("")
-
-        lines.append("=== По рецептам ===")
-        for s in self.logic.brew_log.get_recipe_stats():
-            avg_r = f"{s['avg_rating']:.1f}" if s['avg_rating'] else "нет"
-            lines.append(f"{s['recipe']}:")
-            lines.append(f"   варок: {s['count']}")
-            lines.append(f"   средний выход: {s['avg_yield']:.0f} мл")
-            lines.append(f"   средняя оценка: {avg_r}")
-        lines.append("")
-
-        lines.append("=== Распределение оценок ===")
-        dist = self.logic.brew_log.get_rating_distribution()
-        any_rating = False
-        for rating in [5, 4, 3, 2, 1]:
-            c = dist.get(rating, 0)
-            if c > 0:
-                lines.append(f"{rating}/5: {c} варок")
-                any_rating = True
-        if not any_rating:
-            lines.append("Оценок пока нет")
-        lines.append("")
-
-        lines.append("=== По месяцам ===")
-        months = self.logic.brew_log.get_monthly_stats()
-        for m, c in sorted(months.items(), reverse=True):
-            lines.append(f"{m}: {c} варок")
-
-        self.stats_label.text = "\n".join(lines)
-
-
         tab_log = TabbedPanelItem(text='Журнал')
         tab_log.content = self._build_log_tab()
         self.root.add_widget(tab_log)
@@ -528,12 +466,10 @@ class MainApp(App):
                                                size_hint_y=None, height=dp(60)))
             return
 
-        # Запоминаем последний сгенерированный план и рецепт
         self._last_plan = plan
         self._last_plan_recipe_name = recipe['название']
         self.plan_save_btn.disabled = False
 
-        # ===== Автоматически добавляем запись в журнал =====
         try:
             self.logic.brew_log.add_entry(
                 recipe_name=recipe['название'],
@@ -553,7 +489,6 @@ class MainApp(App):
             self.plan_layout.add_widget(note)
         except Exception as e:
             print(f"Не удалось записать в журнал: {e}")
-        # ===================================================
 
         for step in plan:
             text = f"День {step['день']} | {step['этап']}\n{step['действие']}\nВремя: {step['время']}"
@@ -576,7 +511,6 @@ class MainApp(App):
             info_popup('Ошибка', str(e))
 
     def _check_fermentation_notifications(self):
-        """Проверяет записи журнала на завершённое брожение и показывает попап."""
         try:
             notifications = self.logic.brew_log.check_fermentation_notifications()
         except Exception as e:
@@ -790,6 +724,68 @@ class MainApp(App):
 
         save_btn.bind(on_press=save)
         popup.open()
+
+    # ==================== СТАТИСТИКА ====================
+    def _build_stats_tab(self):
+        box = BoxLayout(orientation='vertical', padding=10, spacing=10)
+
+        refresh_btn = Button(text='Обновить статистику',
+                             size_hint_y=None, height=dp(50))
+        refresh_btn.bind(on_press=lambda x: self._refresh_stats())
+        box.add_widget(refresh_btn)
+
+        scroll = ScrollView()
+        self.stats_label = Label(text='', size_hint_y=None,
+                                 halign='left', valign='top')
+        self.stats_label.bind(texture_size=lambda inst, val: setattr(inst, 'height', val[1]))
+        self.stats_label.bind(width=lambda inst, val: setattr(inst, 'text_size', (val, None)))
+        scroll.add_widget(self.stats_label)
+        box.add_widget(scroll)
+        self._refresh_stats()
+        return box
+
+    def _refresh_stats(self):
+        entries = self.logic.brew_log.entries
+        if not entries:
+            self.stats_label.text = "Журнал пуст — статистики нет."
+            return
+
+        lines = []
+
+        stats = self.logic.brew_log.get_statistics()
+        lines.append("=== Общая статистика ===")
+        lines.append(f"Всего варок: {stats['total_brews']}")
+        lines.append(f"Средний выход: {stats['avg_yield']:.0f} мл")
+        lines.append(f"Последняя варка: {stats['last_brew']}")
+        lines.append("")
+
+        lines.append("=== По рецептам ===")
+        for s in self.logic.brew_log.get_recipe_stats():
+            avg_r = f"{s['avg_rating']:.1f}" if s['avg_rating'] else "нет"
+            lines.append(f"{s['recipe']}:")
+            lines.append(f"   варок: {s['count']}")
+            lines.append(f"   средний выход: {s['avg_yield']:.0f} мл")
+            lines.append(f"   средняя оценка: {avg_r}")
+        lines.append("")
+
+        lines.append("=== Распределение оценок ===")
+        dist = self.logic.brew_log.get_rating_distribution()
+        any_rating = False
+        for rating in [5, 4, 3, 2, 1]:
+            c = dist.get(rating, 0)
+            if c > 0:
+                lines.append(f"{rating}/5: {c} варок")
+                any_rating = True
+        if not any_rating:
+            lines.append("Оценок пока нет")
+        lines.append("")
+
+        lines.append("=== По месяцам ===")
+        months = self.logic.brew_log.get_monthly_stats()
+        for m, c in sorted(months.items(), reverse=True):
+            lines.append(f"{m}: {c} варок")
+
+        self.stats_label.text = "\n".join(lines)
 
     # ==================== ДРОЖЖИ ====================
     def _build_yeast_tab(self):
