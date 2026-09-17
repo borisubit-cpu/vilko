@@ -78,7 +78,7 @@ class TimersTab(BoxLayout):
 
         def toggle(inst, t=timer):
             t['running'] = not t['running']
-            inst.text = '▶' if not t['running'] else '⏸'
+            inst.text = 'Пуск' if not t['running'] else 'Пауза'
 
         def remove(inst, t=timer):
             if t in self.timers:
