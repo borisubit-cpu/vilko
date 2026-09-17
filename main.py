@@ -27,12 +27,9 @@ def info_popup(title, message):
 
 
 class TimersTab(BoxLayout):
-    """Вкладка с несколькими таймерами."""
-
     def __init__(self, **kwargs):
         super().__init__(orientation='vertical', padding=10, spacing=8, **kwargs)
         self.timers = []
-
         form = BoxLayout(size_hint_y=None, height=dp(45), spacing=6)
         self.name_input = TextInput(hint_text='Название', multiline=False, size_hint_x=0.45)
         self.h_input = TextInput(hint_text='ч', multiline=False, input_filter='int', size_hint_x=0.15)
@@ -40,11 +37,8 @@ class TimersTab(BoxLayout):
         self.s_input = TextInput(hint_text='сек', multiline=False, input_filter='int', size_hint_x=0.15)
         add_btn = Button(text='+', size_hint_x=None, width=dp(50))
         add_btn.bind(on_press=self.add_timer)
-        form.add_widget(self.name_input)
-        form.add_widget(self.h_input)
-        form.add_widget(self.m_input)
-        form.add_widget(self.s_input)
-        form.add_widget(add_btn)
+        for w in (self.name_input, self.h_input, self.m_input, self.s_input, add_btn):
+            form.add_widget(w)
         self.add_widget(form)
 
         scroll = ScrollView()
@@ -52,7 +46,6 @@ class TimersTab(BoxLayout):
         self.list_layout.bind(minimum_height=self.list_layout.setter('height'))
         scroll.add_widget(self.list_layout)
         self.add_widget(scroll)
-
         Clock.schedule_interval(self._tick, 1)
 
     def add_timer(self, instance):
@@ -66,15 +59,12 @@ class TimersTab(BoxLayout):
         total = h * 3600 + m * 60 + s
         if total <= 0:
             return
-
         row = BoxLayout(size_hint_y=None, height=dp(50), spacing=4)
         label = Label(text=f"{name}: {self._fmt(total)}", halign='left', valign='middle')
         label.bind(size=lambda inst, val: setattr(inst, 'text_size', (val[0], val[1])))
         pause_btn = Button(text='Пауза', size_hint_x=None, width=dp(90))
         del_btn = Button(text='X', size_hint_x=None, width=dp(50))
-
-        timer = {'name': name, 'remaining': total, 'running': True,
-                 'label': label, 'row': row}
+        timer = {'name': name, 'remaining': total, 'running': True, 'label': label, 'row': row}
 
         def toggle(inst, t=timer):
             t['running'] = not t['running']
@@ -88,13 +78,11 @@ class TimersTab(BoxLayout):
 
         pause_btn.bind(on_press=toggle)
         del_btn.bind(on_press=remove)
-
         row.add_widget(label)
         row.add_widget(pause_btn)
         row.add_widget(del_btn)
         self.list_layout.add_widget(row)
         self.timers.append(timer)
-
         self.name_input.text = ''
         self.h_input.text = ''
         self.m_input.text = ''
@@ -129,48 +117,27 @@ class MainApp(App):
         self.root = TabbedPanel()
         self.root.do_default_tab = False
 
-        tab_recipes = TabbedPanelItem(text='Рецепты')
-        tab_recipes.content = self._build_recipes_tab()
-        self.root.add_widget(tab_recipes)
-
-        tab_calc = TabbedPanelItem(text='Калькуляторы')
-        tab_calc.content = self._build_calc_tab()
-        self.root.add_widget(tab_calc)
-
-        tab_plan = TabbedPanelItem(text='План варки')
-        tab_plan.content = self._build_plan_tab()
-        self.root.add_widget(tab_plan)
-
-        tab_log = TabbedPanelItem(text='Журнал')
-        tab_log.content = self._build_log_tab()
-        self.root.add_widget(tab_log)
-
-        tab_stats = TabbedPanelItem(text='Статистика')
-        tab_stats.content = self._build_stats_tab()
-        self.root.add_widget(tab_stats)
+        tabs = [
+            ('Рецепты', self._build_recipes_tab),
+            ('Калькуляторы', self._build_calc_tab),
+            ('План варки', self._build_plan_tab),
+            ('Журнал', self._build_log_tab),
+            ('Статистика', self._build_stats_tab),
+            ('Дрожжи', self._build_yeast_tab),
+            ('Помощь', self._build_help_tab),
+            ('Инструкция', self._build_instruction_tab),
+            ('Ссылки', self._build_links_tab),
+        ]
+        for title, builder in tabs:
+            tab = TabbedPanelItem(text=title)
+            tab.content = builder()
+            self.root.add_widget(tab)
 
         tab_timers = TabbedPanelItem(text='Таймеры')
         tab_timers.content = TimersTab()
         self.root.add_widget(tab_timers)
 
-        tab_yeast = TabbedPanelItem(text='Дрожжи')
-        tab_yeast.content = self._build_yeast_tab()
-        self.root.add_widget(tab_yeast)
-
-        tab_help = TabbedPanelItem(text='Помощь')
-        tab_help.content = self._build_help_tab()
-        self.root.add_widget(tab_help)
-
-        tab_instr = TabbedPanelItem(text='Инструкция')
-        tab_instr.content = self._build_instruction_tab()
-        self.root.add_widget(tab_instr)
-
-        tab_links = TabbedPanelItem(text='Ссылки')
-        tab_links.content = self._build_links_tab()
-        self.root.add_widget(tab_links)
-
         Clock.schedule_once(lambda dt: self._check_fermentation_notifications(), 2)
-
         return self.root
 
     # ==================== РЕЦЕПТЫ ====================
@@ -179,7 +146,6 @@ class MainApp(App):
         add_btn = Button(text='+ Добавить свой рецепт', size_hint_y=None, height=dp(45))
         add_btn.bind(on_press=lambda x: self._open_add_recipe_form())
         box.add_widget(add_btn)
-
         scroll = ScrollView()
         self.recipes_layout = GridLayout(cols=1, size_hint_y=None, spacing=2)
         self.recipes_layout.bind(minimum_height=self.recipes_layout.setter('height'))
@@ -199,8 +165,8 @@ class MainApp(App):
             row.add_widget(btn)
             if i >= n_builtin:
                 del_btn = Button(text='X', size_hint_x=None, width=dp(45))
-                custom_idx = i - n_builtin
-                del_btn.bind(on_press=lambda x, ci=custom_idx: self._delete_custom_recipe(ci))
+                ci = i - n_builtin
+                del_btn.bind(on_press=lambda x, c=ci: self._delete_custom_recipe(c))
                 row.add_widget(del_btn)
             self.recipes_layout.add_widget(row)
 
@@ -235,15 +201,13 @@ class MainApp(App):
         name_in = TextInput(hint_text='Название рецепта', multiline=False, size_hint_y=None, height=dp(45))
         grain_spinner = Spinner(text='Пшеница', values=GRAIN_DISPLAY_NAMES, size_hint_y=None, height=dp(45))
         amount_in = TextInput(hint_text='Количество зерна (кг)', multiline=False, size_hint_y=None, height=dp(45))
-        hydro_in = TextInput(text='1:4', hint_text='Гидромодуль (например 1:4)', multiline=False, size_hint_y=None, height=dp(45))
+        hydro_in = TextInput(text='1:4', hint_text='Гидромодуль', multiline=False, size_hint_y=None, height=dp(45))
         yeast_in = TextInput(text='спиртовые', hint_text='Тип дрожжей', multiline=False, size_hint_y=None, height=dp(45))
         temp_in = TextInput(text='25', hint_text='Температура брожения (°C)', multiline=False, size_hint_y=None, height=dp(45))
-        ferment_time_in = TextInput(text='5-7 дней', hint_text='Время брожения', multiline=False, size_hint_y=None, height=dp(45))
+        time_in = TextInput(text='5-7 дней', hint_text='Время брожения', multiline=False, size_hint_y=None, height=dp(45))
         desc_in = TextInput(hint_text='Описание', multiline=True, size_hint_y=None, height=dp(70))
-
-        for w in (name_in, grain_spinner, amount_in, hydro_in, yeast_in, temp_in, ferment_time_in, desc_in):
+        for w in (name_in, grain_spinner, amount_in, hydro_in, yeast_in, temp_in, time_in, desc_in):
             box.add_widget(w)
-
         save_btn = Button(text='Сохранить рецепт', size_hint_y=None, height=dp(50))
         box.add_widget(save_btn)
         popup = Popup(title='Новый рецепт', content=box, size_hint=(0.9, 0.9))
@@ -251,7 +215,7 @@ class MainApp(App):
         def save(instance):
             name = name_in.text.strip()
             if not name:
-                info_popup('Ошибка', 'Введите название рецепта')
+                info_popup('Ошибка', 'Введите название')
                 return
             try:
                 amount = float(amount_in.text)
@@ -262,18 +226,15 @@ class MainApp(App):
                 temp = float(temp_in.text)
             except ValueError:
                 temp = 25
-            grain_key = GRAIN_KEY_MAP[grain_spinner.text]
-            grain_bill = {grain_key: amount}
+            grain_bill = {GRAIN_KEY_MAP[grain_spinner.text]: amount}
             recipe = {
-                'название': name,
-                'зерно': grain_bill,
+                'название': name, 'зерно': grain_bill,
                 'гидромодуль': hydro_in.text.strip() or '1:4',
                 'дрожжи': yeast_in.text.strip() or 'спиртовые',
                 'температура': temp,
-                'время_брожения': ferment_time_in.text.strip() or '5-7 дней',
+                'время_брожения': time_in.text.strip() or '5-7 дней',
                 'описание': desc_in.text.strip(),
-                'сложность': 'средняя',
-                'выход': 'неизвестно',
+                'сложность': 'средняя', 'выход': 'неизвестно',
                 'ферменты': self.logic.calculate_enzymes(grain_bill),
             }
             self.logic.add_custom_recipe_data(recipe)
@@ -297,133 +258,108 @@ class MainApp(App):
     def _make_calc_yield_tab(self):
         item = TabbedPanelItem(text='Выход спирта')
         box = BoxLayout(orientation='vertical', padding=10, spacing=10)
-        grain_spinner = Spinner(text='Пшеница', values=GRAIN_DISPLAY_NAMES, size_hint_y=None, height=dp(50))
-        amount_input = TextInput(hint_text='Количество (кг)', multiline=False, size_hint_y=None, height=dp(50))
-        result = Label(text='', size_hint_y=None, height=dp(60))
+        gs = Spinner(text='Пшеница', values=GRAIN_DISPLAY_NAMES, size_hint_y=None, height=dp(50))
+        ai = TextInput(hint_text='Количество (кг)', multiline=False, size_hint_y=None, height=dp(50))
+        res = Label(text='', size_hint_y=None, height=dp(60))
 
-        def calc(instance):
+        def calc(inst):
             try:
-                grain_key = GRAIN_KEY_MAP[grain_spinner.text]
-                amount = float(amount_input.text)
-                value = self.logic.calculate_yield(grain_key, amount)
-                result.text = f"Ожидаемый выход: {value:.2f} л АС"
+                v = self.logic.calculate_yield(GRAIN_KEY_MAP[gs.text], float(ai.text))
+                res.text = f"Ожидаемый выход: {v:.2f} л АС"
             except Exception as e:
-                result.text = f"Ошибка: {e}"
+                res.text = f"Ошибка: {e}"
 
-        btn = Button(text='Рассчитать выход', size_hint_y=None, height=dp(50))
-        btn.bind(on_press=calc)
-        box.add_widget(grain_spinner)
-        box.add_widget(amount_input)
-        box.add_widget(btn)
-        box.add_widget(result)
+        b = Button(text='Рассчитать выход', size_hint_y=None, height=dp(50))
+        b.bind(on_press=calc)
+        for w in (gs, ai, b, res):
+            box.add_widget(w)
         item.content = box
         return item
 
     def _make_calc_water_tab(self):
         item = TabbedPanelItem(text='Вода')
         box = BoxLayout(orientation='vertical', padding=10, spacing=10)
-        grain_spinner = Spinner(text='Пшеница', values=GRAIN_DISPLAY_NAMES, size_hint_y=None, height=dp(50))
-        amount_input = TextInput(hint_text='Количество зерна (кг)', multiline=False, size_hint_y=None, height=dp(50))
-        hydro_input = TextInput(text='1:4', hint_text='Гидромодуль (например 1:4)', multiline=False, size_hint_y=None, height=dp(50))
-        result = Label(text='', size_hint_y=None, height=dp(60))
+        gs = Spinner(text='Пшеница', values=GRAIN_DISPLAY_NAMES, size_hint_y=None, height=dp(50))
+        ai = TextInput(hint_text='Количество зерна (кг)', multiline=False, size_hint_y=None, height=dp(50))
+        hi = TextInput(text='1:4', hint_text='Гидромодуль', multiline=False, size_hint_y=None, height=dp(50))
+        res = Label(text='', size_hint_y=None, height=dp(60))
 
-        def calc(instance):
+        def calc(inst):
             try:
-                grain_key = GRAIN_KEY_MAP[grain_spinner.text]
-                amount = float(amount_input.text)
-                fake_recipe = {'зерно': {grain_key: amount}, 'гидромодуль': hydro_input.text.strip() or '1:4'}
-                water = self.logic.calculate_water_volume(fake_recipe)
-                result.text = f"Требуется воды: {water:.1f} л"
+                fake = {'зерно': {GRAIN_KEY_MAP[gs.text]: float(ai.text)},
+                        'гидромодуль': hi.text.strip() or '1:4'}
+                res.text = f"Требуется воды: {self.logic.calculate_water_volume(fake):.1f} л"
             except Exception as e:
-                result.text = f"Ошибка: {e}"
+                res.text = f"Ошибка: {e}"
 
-        btn = Button(text='Рассчитать объём воды', size_hint_y=None, height=dp(50))
-        btn.bind(on_press=calc)
-        box.add_widget(grain_spinner)
-        box.add_widget(amount_input)
-        box.add_widget(hydro_input)
-        box.add_widget(btn)
-        box.add_widget(result)
+        b = Button(text='Рассчитать объём воды', size_hint_y=None, height=dp(50))
+        b.bind(on_press=calc)
+        for w in (gs, ai, hi, b, res):
+            box.add_widget(w)
         item.content = box
         return item
 
     def _make_calc_enzymes_tab(self):
         item = TabbedPanelItem(text='Ферменты')
         box = BoxLayout(orientation='vertical', padding=10, spacing=10)
-        grain_spinner = Spinner(text='Пшеница', values=GRAIN_DISPLAY_NAMES, size_hint_y=None, height=dp(50))
-        amount_input = TextInput(hint_text='Количество зерна (кг)', multiline=False, size_hint_y=None, height=dp(50))
-        result = Label(text='', size_hint_y=None, height=dp(120))
+        gs = Spinner(text='Пшеница', values=GRAIN_DISPLAY_NAMES, size_hint_y=None, height=dp(50))
+        ai = TextInput(hint_text='Количество зерна (кг)', multiline=False, size_hint_y=None, height=dp(50))
+        res = Label(text='', size_hint_y=None, height=dp(120))
 
-        def calc(instance):
+        def calc(inst):
             try:
-                grain_key = GRAIN_KEY_MAP[grain_spinner.text]
-                amount = float(amount_input.text)
-                enzymes = self.logic.calculate_enzymes({grain_key: amount})
-                lines = [f"{name}: {val} г" for name, val in enzymes.items()]
-                result.text = "\n".join(lines)
+                enz = self.logic.calculate_enzymes({GRAIN_KEY_MAP[gs.text]: float(ai.text)})
+                res.text = "\n".join(f"{n}: {v} г" for n, v in enz.items())
             except Exception as e:
-                result.text = f"Ошибка: {e}"
+                res.text = f"Ошибка: {e}"
 
-        btn = Button(text='Рассчитать ферменты', size_hint_y=None, height=dp(50))
-        btn.bind(on_press=calc)
-        box.add_widget(grain_spinner)
-        box.add_widget(amount_input)
-        box.add_widget(btn)
-        box.add_widget(result)
+        b = Button(text='Рассчитать ферменты', size_hint_y=None, height=dp(50))
+        b.bind(on_press=calc)
+        for w in (gs, ai, b, res):
+            box.add_widget(w)
         item.content = box
         return item
 
     def _make_calc_yeast_tab(self):
         item = TabbedPanelItem(text='Дрожжи')
         box = BoxLayout(orientation='vertical', padding=10, spacing=10)
-        water_input = TextInput(hint_text='Объём затора (л)', multiline=False, size_hint_y=None, height=dp(50))
-        yeast_input = TextInput(text='спиртовые', hint_text='Тип дрожжей', multiline=False, size_hint_y=None, height=dp(50))
-        result = Label(text='', size_hint_y=None, height=dp(60))
+        wi = TextInput(hint_text='Объём затора (л)', multiline=False, size_hint_y=None, height=dp(50))
+        yi = TextInput(text='спиртовые', hint_text='Тип дрожжей', multiline=False, size_hint_y=None, height=dp(50))
+        res = Label(text='', size_hint_y=None, height=dp(60))
 
-        def calc(instance):
+        def calc(inst):
             try:
-                water = float(water_input.text)
-                amount = self.logic.calculate_yeast(water, yeast_input.text.strip())
-                result.text = f"Требуется дрожжей: {amount} г"
+                res.text = f"Требуется дрожжей: {self.logic.calculate_yeast(float(wi.text), yi.text.strip())} г"
             except Exception as e:
-                result.text = f"Ошибка: {e}"
+                res.text = f"Ошибка: {e}"
 
-        btn = Button(text='Рассчитать дрожжи', size_hint_y=None, height=dp(50))
-        btn.bind(on_press=calc)
-        box.add_widget(water_input)
-        box.add_widget(yeast_input)
-        box.add_widget(btn)
-        box.add_widget(result)
+        b = Button(text='Рассчитать дрожжи', size_hint_y=None, height=dp(50))
+        b.bind(on_press=calc)
+        for w in (wi, yi, b, res):
+            box.add_widget(w)
         item.content = box
         return item
 
     def _make_calc_heads_tab(self):
         item = TabbedPanelItem(text='Головы')
         box = BoxLayout(orientation='vertical', padding=10, spacing=10)
-        volume_input = TextInput(hint_text='Объём спирта-сырца (мл)', multiline=False, size_hint_y=None, height=dp(50))
-        strength_input = TextInput(hint_text='Крепость спирта-сырца (%)', multiline=False, size_hint_y=None, height=dp(50))
-        percent_input = TextInput(text='10', hint_text='Процент отбора голов (%)', multiline=False, size_hint_y=None, height=dp(50))
-        result = Label(text='', size_hint_y=None, height=dp(100))
+        vi = TextInput(hint_text='Объём спирта-сырца (мл)', multiline=False, size_hint_y=None, height=dp(50))
+        si = TextInput(hint_text='Крепость спирта-сырца (%)', multiline=False, size_hint_y=None, height=dp(50))
+        pi = TextInput(text='10', hint_text='Процент отбора голов (%)', multiline=False, size_hint_y=None, height=dp(50))
+        res = Label(text='', size_hint_y=None, height=dp(100))
 
-        def calc(instance):
+        def calc(inst):
             try:
-                volume_ml = float(volume_input.text)
-                strength = float(strength_input.text)
-                percent = float(percent_input.text or 10)
-                ac_ml = volume_ml * strength / 100
-                heads_ml = ac_ml * percent / 100
-                result.text = (f"Абсолютный спирт: {ac_ml:.0f} мл\n"
-                               f"Объём голов: {heads_ml:.0f} мл ({percent:.0f}% от АС)")
+                ac = float(vi.text) * float(si.text) / 100
+                heads = ac * float(pi.text or 10) / 100
+                res.text = f"Абсолютный спирт: {ac:.0f} мл\nОбъём голов: {heads:.0f} мл"
             except Exception as e:
-                result.text = f"Ошибка: {e}"
+                res.text = f"Ошибка: {e}"
 
-        btn = Button(text='Рассчитать головы', size_hint_y=None, height=dp(50))
-        btn.bind(on_press=calc)
-        box.add_widget(volume_input)
-        box.add_widget(strength_input)
-        box.add_widget(percent_input)
-        box.add_widget(btn)
-        box.add_widget(result)
+        b = Button(text='Рассчитать головы', size_hint_y=None, height=dp(50))
+        b.bind(on_press=calc)
+        for w in (vi, si, pi, b, res):
+            box.add_widget(w)
         item.content = box
         return item
 
@@ -439,8 +375,7 @@ class MainApp(App):
         box.add_widget(gen_btn)
 
         self.plan_save_btn = Button(text='Сохранить план в HTML',
-                                     size_hint_y=None, height=dp(50),
-                                     disabled=True)
+                                     size_hint_y=None, height=dp(50), disabled=True)
         self.plan_save_btn.bind(on_press=self._save_plan_html)
         box.add_widget(self.plan_save_btn)
 
@@ -458,16 +393,115 @@ class MainApp(App):
             self.plan_spinner.text = names[0]
 
     def _generate_plan(self, instance):
-        self.plan_layout.clear_widgets()
         all_recipes = self.logic.get_all_recipes()
         recipe = next((r for r in all_recipes if r['название'] == self.plan_spinner.text), None)
         if not recipe:
             return
+        self._open_edit_recipe_dialog(recipe)
+
+    def _open_edit_recipe_dialog(self, recipe):
+        box = BoxLayout(orientation='vertical', padding=10, spacing=6)
+
+        source_text = "Исходный состав: " + ", ".join(
+            f"{g} {a} кг" for g, a in recipe['зерно'].items())
+        box.add_widget(Label(text=source_text, size_hint_y=None, height=dp(40)))
+
+        total_grain_original = sum(recipe['зерно'].values())
+        box.add_widget(Label(text='Общее количество зерна (кг):', size_hint_y=None, height=dp(25)))
+        grain_in = TextInput(text=str(total_grain_original), multiline=False,
+                              input_filter='float', size_hint_y=None, height=dp(45))
+        box.add_widget(grain_in)
+
+        box.add_widget(Label(text='Гидромодуль (например 1:4):', size_hint_y=None, height=dp(25)))
+        hydro_in = TextInput(text=recipe['гидромодуль'], multiline=False,
+                              size_hint_y=None, height=dp(45))
+        box.add_widget(hydro_in)
+
+        calc_label = Label(text='', size_hint_y=None, height=dp(130),
+                            halign='left', valign='top')
+        calc_label.bind(size=lambda inst, val: setattr(inst, 'text_size', (val[0], val[1])))
+        box.add_widget(calc_label)
+
+        def recalc(*args):
+            try:
+                total_grain = float(grain_in.text)
+                ratio_str = hydro_in.text.strip()
+                ratio = float(ratio_str.split(':')[1])
+                water = total_grain * ratio
+                scale = total_grain / total_grain_original if total_grain_original > 0 else 0
+                scaled = {g: round(a * scale, 2) for g, a in recipe['зерно'].items()}
+                enzymes = self.logic.calculate_enzymes(scaled)
+                ac = sum(self.logic.grain_base.get(g, {}).get('выход_спирта', 0) * a
+                          for g, a in scaled.items())
+                lines = [f"Воды: {water:.1f} л"]
+                for name, val in enzymes.items():
+                    lines.append(f"{name}: {val} г")
+                lines.append(f"Ожидаемый выход АС: {ac:.2f} л")
+                calc_label.text = "\n".join(lines)
+            except Exception:
+                calc_label.text = "Введите корректные числа"
+
+        grain_in.bind(text=recalc)
+        hydro_in.bind(text=recalc)
+        recalc()
+
+        btn_row = BoxLayout(size_hint_y=None, height=dp(50), spacing=6)
+        ok_btn = Button(text='Сгенерировать план')
+        cancel_btn = Button(text='Отмена')
+        btn_row.add_widget(ok_btn)
+        btn_row.add_widget(cancel_btn)
+        box.add_widget(btn_row)
+
+        popup = Popup(title='Параметры варки', content=box, size_hint=(0.92, 0.92))
+
+        def on_ok(inst):
+            try:
+                total_grain = float(grain_in.text)
+                ratio = float(hydro_in.text.strip().split(':')[1])
+            except Exception:
+                info_popup('Ошибка', 'Проверьте числа')
+                return
+            scale = total_grain / total_grain_original if total_grain_original > 0 else 0
+            scaled = {g: round(a * scale, 2) for g, a in recipe['зерно'].items()}
+            modified = dict(recipe)
+            modified['зерно'] = scaled
+            modified['гидромодуль'] = f"1:{ratio}"
+            popup.dismiss()
+            self._build_and_show_plan(modified)
+
+        def on_cancel(inst):
+            popup.dismiss()
+
+        ok_btn.bind(on_press=on_ok)
+        cancel_btn.bind(on_press=on_cancel)
+        popup.open()
+
+    def _build_and_show_plan(self, recipe):
+        self.plan_layout.clear_widgets()
+
+        water = self.logic.calculate_water_volume(recipe)
+        enzymes = self.logic.calculate_enzymes(recipe['зерно'])
+        ac_yield = sum(self.logic.grain_base.get(g, {}).get('выход_спирта', 0) * a
+                        for g, a in recipe['зерно'].items())
+
+        summary_lines = [
+            f"Зерно: {sum(recipe['зерно'].values()):.1f} кг",
+            f"Вода: {water:.1f} л",
+            "Ферменты: " + ", ".join(f"{n} {v} г" for n, v in enzymes.items()),
+            f"Ожидаемый выход: {ac_yield:.2f} л АС",
+        ]
+        summary = Label(text="\n".join(summary_lines),
+                         size_hint_y=None, height=dp(110),
+                         halign='left', valign='top',
+                         color=(0.1, 0.4, 0.8, 1))
+        summary.bind(size=lambda inst, val: setattr(inst, 'text_size', (val[0], val[1])))
+        self.plan_layout.add_widget(summary)
+
         try:
             plan = self.logic.generate_plan(recipe)
         except Exception as e:
-            self.plan_layout.add_widget(Label(text=f"Ошибка построения плана: {e}",
-                                               size_hint_y=None, height=dp(60)))
+            self.plan_layout.add_widget(Label(text=f"Ошибка плана: {e}",
+                                                size_hint_y=None, height=dp(60)))
             return
 
         self._last_plan = plan
@@ -479,17 +513,14 @@ class MainApp(App):
                 recipe_name=recipe['название'],
                 grain_bill=recipe['зерно'].copy(),
                 og=None, fg=None, yield_ml=None,
-                notes=f"Запланировано: {recipe['название']}",
-            )
+                notes=f"Запланировано: {recipe['название']}")
             try:
                 self._refresh_log()
             except Exception:
                 pass
-
-            note = Label(
-                text=f"Запись «{recipe['название']}» добавлена в журнал",
-                size_hint_y=None, height=dp(30), color=(0.2, 0.7, 0.2, 1)
-            )
+            note = Label(text="Запись добавлена в журнал",
+                          size_hint_y=None, height=dp(30),
+                          color=(0.2, 0.7, 0.2, 1))
             self.plan_layout.add_widget(note)
         except Exception as e:
             print(f"Не удалось записать в журнал: {e}")
@@ -509,8 +540,7 @@ class MainApp(App):
             return
         try:
             path = self.logic.export_plan_to_html(plan, name)
-            info_popup('План сохранён',
-                       f"Файл: {path}\n\n(в папке с данными приложения)")
+            info_popup('План сохранён', f"Файл: {path}")
         except Exception as e:
             info_popup('Ошибка', str(e))
 
@@ -520,22 +550,17 @@ class MainApp(App):
         except Exception as e:
             print(f"Ошибка проверки брожения: {e}")
             return
-
         pending = []
         for idx, name, dt_str in notifications:
             entry = self.logic.brew_log.get_entry(idx)
             if entry and not entry.get('notified'):
                 pending.append((idx, name, dt_str))
-
         if not pending:
             return
-
         lines = [f"• {name}  (окончание: {dt_str})" for _, name, dt_str in pending]
         text = "Брожение завершено. Пора проверять брагу:\n\n" + "\n".join(lines)
-
         for idx, _, _ in pending:
             self.logic.brew_log.update_entry(idx, 'notified', True)
-
         popup = Popup(title='Брожение завершено',
                        content=Label(text=text, halign='left', valign='top'),
                        size_hint=(0.85, 0.5))
@@ -546,7 +571,6 @@ class MainApp(App):
         box = BoxLayout(orientation='vertical', padding=10, spacing=6)
         self.log_stats_label = Label(text='', size_hint_y=None, height=dp(40))
         box.add_widget(self.log_stats_label)
-
         btn_row = BoxLayout(size_hint_y=None, height=dp(50), spacing=6)
         add_btn = Button(text='+ Записать варку')
         add_btn.bind(on_press=lambda x: self._open_add_log_form())
@@ -555,7 +579,6 @@ class MainApp(App):
         btn_row.add_widget(add_btn)
         btn_row.add_widget(refresh_btn)
         box.add_widget(btn_row)
-
         scroll = ScrollView()
         self.log_layout = GridLayout(cols=1, size_hint_y=None, spacing=2)
         self.log_layout.bind(minimum_height=self.log_layout.setter('height'))
@@ -573,7 +596,6 @@ class MainApp(App):
                                           f"Последняя: {stats['last_brew']}")
         else:
             self.log_stats_label.text = "Записей пока нет"
-
         entries = self.logic.brew_log.get_last_entries(20)
         total = len(self.logic.brew_log.entries)
         for pos, entry in enumerate(entries):
@@ -594,89 +616,64 @@ class MainApp(App):
         entry = self.logic.brew_log.get_entry(index)
         if not entry:
             return
-
         box = BoxLayout(orientation='vertical', padding=12, spacing=8)
-
         info = Label(
             text=(f"Рецепт: {entry['recipe']}\n"
-                  f"Дата создания: {entry['date']}\n"
+                  f"Дата: {entry['date']}\n"
                   f"OG: {entry.get('original_gravity')}  |  FG: {entry.get('final_gravity')}\n"
                   f"Выход: {entry.get('alcohol_yield_ml')} мл"),
             size_hint_y=None, height=dp(90), halign='left', valign='top')
         info.bind(size=lambda inst, val: setattr(inst, 'text_size', (val[0], val[1])))
         box.add_widget(info)
-
         box.add_widget(Label(text='Заметки:', size_hint_y=None, height=dp(25)))
         notes_in = TextInput(text=entry.get('notes') or '', multiline=True,
                              size_hint_y=None, height=dp(90))
         box.add_widget(notes_in)
-
-        box.add_widget(Label(text='Оценка рецепта (1 — плохо, 5 — отлично):',
-                             size_hint_y=None, height=dp(25)))
+        box.add_widget(Label(text='Оценка (1-5):', size_hint_y=None, height=dp(25)))
         stars_row = BoxLayout(size_hint_y=None, height=dp(50), spacing=4)
-
         current = {'rating': entry.get('rating') or 0}
-        rating_buttons = []
+        btns = []
 
         def refresh_buttons():
-            for i, b in enumerate(rating_buttons, 1):
-                if i == current['rating']:
-                    b.background_color = (0.2, 0.7, 0.2, 1)
-                else:
-                    b.background_color = (0.5, 0.5, 0.5, 1)
+            for i, b in enumerate(btns, 1):
+                b.background_color = (0.2, 0.7, 0.2, 1) if i == current['rating'] else (0.5, 0.5, 0.5, 1)
 
-        def make_handler(value):
-            def handler(inst):
-                current['rating'] = value
+        def handler(v):
+            def h(inst):
+                current['rating'] = v
                 refresh_buttons()
-            return handler
+            return h
 
         for i in range(1, 6):
             b = Button(text=str(i), size_hint_x=None, width=dp(60))
-            b.bind(on_press=make_handler(i))
-            rating_buttons.append(b)
+            b.bind(on_press=handler(i))
+            btns.append(b)
             stars_row.add_widget(b)
         refresh_buttons()
         box.add_widget(stars_row)
-
-        box.add_widget(Label(text='Начало брожения (ГГГГ-ММ-ДД ЧЧ:ММ):',
-                             size_hint_y=None, height=dp(25)))
+        box.add_widget(Label(text='Начало брожения (ГГГГ-ММ-ДД ЧЧ:ММ):', size_hint_y=None, height=dp(25)))
         start_in = TextInput(text=entry.get('fermentation_start') or '',
-                             hint_text='например 2025-10-15 18:30',
-                             multiline=False, size_hint_y=None, height=dp(45))
+                              multiline=False, size_hint_y=None, height=dp(45))
         box.add_widget(start_in)
-
-        box.add_widget(Label(text='Окончание брожения (ГГГГ-ММ-ДД ЧЧ:ММ):',
-                             size_hint_y=None, height=dp(25)))
+        box.add_widget(Label(text='Окончание брожения:', size_hint_y=None, height=dp(25)))
         end_in = TextInput(text=entry.get('fermentation_end') or '',
-                           hint_text='например 2025-10-22 12:00',
-                           multiline=False, size_hint_y=None, height=dp(45))
+                            multiline=False, size_hint_y=None, height=dp(45))
         box.add_widget(end_in)
-
         save_btn = Button(text='Сохранить изменения', size_hint_y=None, height=dp(50))
         box.add_widget(save_btn)
+        popup = Popup(title=f"Запись: {entry['recipe']}", content=box, size_hint=(0.92, 0.92))
 
-        popup = Popup(title=f"Запись: {entry['recipe']}",
-                       content=box, size_hint=(0.92, 0.92))
-
-        def save(instance):
-            notes_val = notes_in.text.strip()
-            self.logic.brew_log.add_notes(index, notes_val)
-
+        def save(inst):
+            self.logic.brew_log.add_notes(index, notes_in.text.strip())
             if current['rating'] >= 1:
                 self.logic.brew_log.set_rating(index, current['rating'])
-
-            s = start_in.text.strip()
-            if s:
-                self.logic.brew_log.set_fermentation_start(index, s)
-
-            e = end_in.text.strip()
-            if e:
-                self.logic.brew_log.set_fermentation_end(index, e)
-
+            if start_in.text.strip():
+                self.logic.brew_log.set_fermentation_start(index, start_in.text.strip())
+            if end_in.text.strip():
+                self.logic.brew_log.set_fermentation_end(index, end_in.text.strip())
             popup.dismiss()
             self._refresh_log()
-            info_popup('Сохранено', f"Запись «{entry['recipe']}» обновлена")
+            info_popup('Сохранено', f"Запись обновлена")
 
         save_btn.bind(on_press=save)
         popup.open()
@@ -688,41 +685,32 @@ class MainApp(App):
     def _open_add_log_form(self):
         box = BoxLayout(orientation='vertical', padding=10, spacing=6)
         names = [r['название'] for r in self.logic.get_all_recipes()]
-        recipe_spinner = Spinner(text=names[0] if names else '', values=names, size_hint_y=None, height=dp(45))
-        og_in = TextInput(hint_text='Начальная плотность (необязательно)', multiline=False, size_hint_y=None, height=dp(45))
-        fg_in = TextInput(hint_text='Конечная плотность (необязательно)', multiline=False, size_hint_y=None, height=dp(45))
-        yield_in = TextInput(hint_text='Выход, мл (необязательно)', multiline=False, size_hint_y=None, height=dp(45))
-        notes_in = TextInput(hint_text='Заметки', multiline=True, size_hint_y=None, height=dp(80))
-
-        for w in (recipe_spinner, og_in, fg_in, yield_in, notes_in):
+        sp = Spinner(text=names[0] if names else '', values=names, size_hint_y=None, height=dp(45))
+        og_in = TextInput(hint_text='Начальная плотность (OG)', multiline=False, size_hint_y=None, height=dp(45))
+        fg_in = TextInput(hint_text='Конечная плотность (FG)', multiline=False, size_hint_y=None, height=dp(45))
+        y_in = TextInput(hint_text='Выход, мл', multiline=False, size_hint_y=None, height=dp(45))
+        n_in = TextInput(hint_text='Заметки', multiline=True, size_hint_y=None, height=dp(80))
+        for w in (sp, og_in, fg_in, y_in, n_in):
             box.add_widget(w)
-
-        save_btn = Button(text='Сохранить запись', size_hint_y=None, height=dp(50))
+        save_btn = Button(text='Сохранить', size_hint_y=None, height=dp(50))
         box.add_widget(save_btn)
-        popup = Popup(title='Новая запись в журнале', content=box, size_hint=(0.9, 0.85))
+        popup = Popup(title='Новая запись', content=box, size_hint=(0.9, 0.85))
 
-        def to_float(text):
-            text = text.strip()
-            if not text:
+        def tf(t):
+            t = t.strip()
+            if not t:
                 return None
             try:
-                return float(text)
+                return float(t)
             except ValueError:
                 return None
 
-        def save(instance):
-            recipe_name = recipe_spinner.text
-            all_recipes = self.logic.get_all_recipes()
-            recipe = next((r for r in all_recipes if r['название'] == recipe_name), None)
-            grain_bill = recipe['зерно'] if recipe else {}
-            self.logic.brew_log.add_entry(
-                recipe_name=recipe_name,
-                grain_bill=grain_bill,
-                og=to_float(og_in.text),
-                fg=to_float(fg_in.text),
-                yield_ml=to_float(yield_in.text),
-                notes=notes_in.text.strip(),
-            )
+        def save(inst):
+            rname = sp.text
+            rec = next((r for r in self.logic.get_all_recipes() if r['название'] == rname), None)
+            gb = rec['зерно'] if rec else {}
+            self.logic.brew_log.add_entry(rname, gb, tf(og_in.text), tf(fg_in.text),
+                                            tf(y_in.text), n_in.text.strip())
             popup.dismiss()
             self._refresh_log()
 
@@ -732,15 +720,11 @@ class MainApp(App):
     # ==================== СТАТИСТИКА ====================
     def _build_stats_tab(self):
         box = BoxLayout(orientation='vertical', padding=10, spacing=10)
-
-        refresh_btn = Button(text='Обновить статистику',
-                             size_hint_y=None, height=dp(50))
+        refresh_btn = Button(text='Обновить статистику', size_hint_y=None, height=dp(50))
         refresh_btn.bind(on_press=lambda x: self._refresh_stats())
         box.add_widget(refresh_btn)
-
         scroll = ScrollView()
-        self.stats_label = Label(text='', size_hint_y=None,
-                                 halign='left', valign='top')
+        self.stats_label = Label(text='', size_hint_y=None, halign='left', valign='top')
         self.stats_label.bind(texture_size=lambda inst, val: setattr(inst, 'height', val[1]))
         self.stats_label.bind(width=lambda inst, val: setattr(inst, 'text_size', (val, None)))
         scroll.add_widget(self.stats_label)
@@ -753,58 +737,44 @@ class MainApp(App):
         if not entries:
             self.stats_label.text = "Журнал пуст — статистики нет."
             return
-
         lines = []
-
-        stats = self.logic.brew_log.get_statistics()
+        s = self.logic.brew_log.get_statistics()
         lines.append("=== Общая статистика ===")
-        lines.append(f"Всего варок: {stats['total_brews']}")
-        lines.append(f"Средний выход: {stats['avg_yield']:.0f} мл")
-        lines.append(f"Последняя варка: {stats['last_brew']}")
-        lines.append("")
-
+        lines.append(f"Всего варок: {s['total_brews']}")
+        lines.append(f"Средний выход: {s['avg_yield']:.0f} мл")
+        lines.append(f"Последняя: {s['last_brew']}\n")
         lines.append("=== По рецептам ===")
-        for s in self.logic.brew_log.get_recipe_stats():
-            avg_r = f"{s['avg_rating']:.1f}" if s['avg_rating'] else "нет"
-            lines.append(f"{s['recipe']}:")
-            lines.append(f"   варок: {s['count']}")
-            lines.append(f"   средний выход: {s['avg_yield']:.0f} мл")
-            lines.append(f"   средняя оценка: {avg_r}")
-        lines.append("")
-
-        lines.append("=== Распределение оценок ===")
-        dist = self.logic.brew_log.get_rating_distribution()
-        any_rating = False
+        for r in self.logic.brew_log.get_recipe_stats():
+            ar = f"{r['avg_rating']:.1f}" if r['avg_rating'] else "нет"
+            lines.append(f"{r['recipe']}: варок {r['count']}, ср.выход {r['avg_yield']:.0f} мл, оценка {ar}")
+        lines.append("\n=== Распределение оценок ===")
+        d = self.logic.brew_log.get_rating_distribution()
+        any_r = False
         for rating in [5, 4, 3, 2, 1]:
-            c = dist.get(rating, 0)
+            c = d.get(rating, 0)
             if c > 0:
-                lines.append(f"{rating}/5: {c} варок")
-                any_rating = True
-        if not any_rating:
+                lines.append(f"{rating}/5: {c}")
+                any_r = True
+        if not any_r:
             lines.append("Оценок пока нет")
-        lines.append("")
-
-        lines.append("=== По месяцам ===")
-        months = self.logic.brew_log.get_monthly_stats()
-        for m, c in sorted(months.items(), reverse=True):
-            lines.append(f"{m}: {c} варок")
-
+        lines.append("\n=== По месяцам ===")
+        for m, c in sorted(self.logic.brew_log.get_monthly_stats().items(), reverse=True):
+            lines.append(f"{m}: {c}")
         self.stats_label.text = "\n".join(lines)
 
     # ==================== ДРОЖЖИ ====================
     def _build_yeast_tab(self):
         box = BoxLayout(orientation='vertical', padding=10, spacing=6)
-        search_row = BoxLayout(size_hint_y=None, height=dp(50), spacing=6)
-        self.yeast_search_input = TextInput(hint_text='Поиск (название, тип, зерно)', multiline=False)
-        search_btn = Button(text='Искать', size_hint_x=None, width=dp(90))
-        search_btn.bind(on_press=lambda x: self._search_yeasts())
-        clear_btn = Button(text='Сброс', size_hint_x=None, width=dp(90))
-        clear_btn.bind(on_press=lambda x: self._refresh_yeasts())
-        search_row.add_widget(self.yeast_search_input)
-        search_row.add_widget(search_btn)
-        search_row.add_widget(clear_btn)
-        box.add_widget(search_row)
-
+        sr = BoxLayout(size_hint_y=None, height=dp(50), spacing=6)
+        self.yeast_search_input = TextInput(hint_text='Поиск', multiline=False)
+        sb = Button(text='Искать', size_hint_x=None, width=dp(90))
+        sb.bind(on_press=lambda x: self._search_yeasts())
+        cb = Button(text='Сброс', size_hint_x=None, width=dp(90))
+        cb.bind(on_press=lambda x: self._refresh_yeasts())
+        sr.add_widget(self.yeast_search_input)
+        sr.add_widget(sb)
+        sr.add_widget(cb)
+        box.add_widget(sr)
         scroll = ScrollView()
         self.yeast_layout = GridLayout(cols=1, size_hint_y=None, spacing=4)
         self.yeast_layout.bind(minimum_height=self.yeast_layout.setter('height'))
@@ -817,24 +787,21 @@ class MainApp(App):
         self._render_yeasts(self.logic.yeast_db.get_all())
 
     def _search_yeasts(self):
-        query = self.yeast_search_input.text.strip()
-        if not query:
+        q = self.yeast_search_input.text.strip()
+        if not q:
             self._refresh_yeasts()
             return
-        self._render_yeasts(self.logic.yeast_db.search(query))
+        self._render_yeasts(self.logic.yeast_db.search(q))
 
     def _render_yeasts(self, yeasts):
         self.yeast_layout.clear_widgets()
         if not yeasts:
             self.yeast_layout.add_widget(Label(text='Ничего не найдено', size_hint_y=None, height=dp(40)))
             return
-        for yeast in yeasts:
-            text = (f"{yeast['название']} ({yeast['тип']})\n"
-                    f"Темп: {yeast['темп_мин']}-{yeast['темп_макс']}°C | "
-                    f"Толерантность: {yeast['алко_толерантность']}% | "
-                    f"Рейтинг: {yeast.get('рейтинг', '-')}\n"
-                    f"{yeast['описание']}\n"
-                    f"Рекомендации: {', '.join(yeast.get('рекомендации', []))}")
+        for y in yeasts:
+            text = (f"{y['название']} ({y['тип']})\n"
+                    f"Темп: {y['темп_мин']}-{y['темп_макс']}°C | Толерантность: {y['алко_толерантность']}%\n"
+                    f"{y['описание']}\nРекомендации: {', '.join(y.get('рекомендации', []))}")
             lbl = Label(text=text, size_hint_y=None, halign='left', valign='top')
             lbl.bind(texture_size=lambda inst, val: setattr(inst, 'height', val[1] + dp(10)))
             lbl.bind(width=lambda inst, val: setattr(inst, 'text_size', (val, None)))
@@ -843,9 +810,8 @@ class MainApp(App):
     # ==================== ПОМОЩЬ ====================
     def _build_help_tab(self):
         box = BoxLayout(orientation='vertical', padding=10, spacing=10)
-        self.question_input = TextInput(hint_text='Ваш вопрос...',
-                                         multiline=False,
-                                         size_hint_y=None, height=dp(50))
+        self.question_input = TextInput(hint_text='Ваш вопрос...', multiline=False,
+                                          size_hint_y=None, height=dp(50))
         box.add_widget(self.question_input)
         btn = Button(text='Спросить', size_hint_y=None, height=dp(50))
         btn.bind(on_press=self._ask_help)
@@ -869,11 +835,9 @@ class MainApp(App):
     # ==================== ИНСТРУКЦИЯ ====================
     def _build_instruction_tab(self):
         box = BoxLayout(orientation='vertical', padding=10, spacing=10)
-
         save_btn = Button(text='Сохранить инструкцию в HTML', size_hint_y=None, height=dp(50))
         save_btn.bind(on_press=self._save_instruction_html)
         box.add_widget(save_btn)
-
         scroll = ScrollView()
         label = Label(text=self._instruction_text(), size_hint_y=None,
                       halign='left', valign='top', markup=True)
@@ -890,24 +854,35 @@ class MainApp(App):
             "[b][size=16]Разделы приложения[/size][/b]\n"
             "• [b]Рецепты[/b] — 20 встроенных рецептов + добавление своих\n"
             "• [b]Калькуляторы[/b] — выход спирта, вода, ферменты, дрожжи, головы\n"
-            "• [b]План варки[/b] — пошаговый план по выбранному рецепту\n"
-            "• [b]Журнал[/b] — статистика, оценки, заметки по каждой варке\n"
-            "• [b]Таймеры[/b] — несколько параллельных таймеров с уведомлением\n"
-            "• [b]Дрожжи[/b] — база с характеристиками и рекомендациями\n"
-            "• [b]Помощь[/b] — быстрые ответы на частые вопросы\n"
-            "• [b]Ссылки[/b] — Telegram-канал и форумы\n\n"
+            "• [b]План варки[/b] — пошаговый план с редактированием параметров\n"
+            "• [b]Журнал[/b] — заметки, оценки, даты брожения\n"
+            "• [b]Статистика[/b] — сводка по рецептам, оценкам, месяцам\n"
+            "• [b]Таймеры[/b] — несколько параллельных таймеров\n"
+            "• [b]Дрожжи[/b] — база с характеристиками\n"
+            "• [b]Помощь[/b] — быстрые ответы\n"
+            "• [b]Ссылки[/b] — Telegram и форумы\n\n"
 
-            "[b][size=16]Как начать[/size][/b]\n"
-            "1. Выберите рецепт в разделе «Рецепты» или добавьте свой\n"
-            "2. Откройте «План варки», выберите рецепт — получите пошаговую инструкцию\n"
-            "3. Отмечайте процесс в «Журнале»: заметки, оценки, даты брожения\n"
-            "4. Используйте «Таймеры» для контроля пауз и брожения\n\n"
+            "[b][size=16]Генерация плана варки (важно!)[/size][/b]\n"
+            "1. Откройте «План варки», выберите рецепт\n"
+            "2. Нажмите «Сгенерировать план» — откроется окно «Параметры варки»\n"
+            "3. Измените количество зерна и/или гидромодуль под свои условия\n"
+            "4. Программа [b]мгновенно пересчитает[/b]:\n"
+            "    - объём воды\n"
+            "    - количество ферментов\n"
+            "    - ожидаемый выход абсолютного спирта\n"
+            "5. Нажмите «Сгенерировать план» — план появится с расчётными данными\n"
+            "6. Запись автоматически попадёт в Журнал\n"
+            "7. Кнопкой «Сохранить план в HTML» можно выгрузить план в файл\n\n"
 
-            "[b][size=16]Полезные особенности[/size][/b]\n"
-            "• Все данные хранятся в JSON-файлах на устройстве\n"
-            "• Пользовательские рецепты сохраняются отдельно\n"
-            "• Журнал можно редактировать и очищать\n"
-            "• При изменении записи фиксируется дата и время\n\n"
+            "[b][size=16]Журнал и уведомления[/size][/b]\n"
+            "• Нажмите на запись — откроется редактор (заметки, оценка, даты)\n"
+            "• Укажите дату окончания брожения в формате ГГГГ-ММ-ДД ЧЧ:ММ\n"
+            "• При следующем запуске приложение напомнит о завершённом брожении\n\n"
+
+            "[b][size=16]Советы[/size][/b]\n"
+            "• Используйте Таймеры для контроля пауз осахаривания\n"
+            "• Дрожжи выбирайте по температуре и типу зерна\n"
+            "• Статистика покажет, какие рецепты у вас в почёте\n\n"
 
             "[color=#b8860b][b]Внимание:[/b] Соблюдайте законодательство вашей страны "
             "в отношении производства алкогольных напитков.[/color]"
@@ -916,8 +891,7 @@ class MainApp(App):
     def _save_instruction_html(self, instance):
         try:
             path = self.logic.export_instruction_to_html()
-            info_popup('Инструкция сохранена',
-                       f"Файл: {path}\n\n(в папке с данными приложения)")
+            info_popup('Инструкция сохранена', f"Файл: {path}")
         except Exception as e:
             info_popup('Ошибка', str(e))
 
