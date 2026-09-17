@@ -459,6 +459,12 @@ class MainApp(App):
         gen_btn = Button(text='Сгенерировать план', size_hint_y=None, height=dp(50))
         gen_btn.bind(on_press=self._generate_plan)
         box.add_widget(gen_btn)
+        
+       self.plan_save_btn = Button(text='Сохранить план в HTML',
+                                     size_hint_y=None, height=dp(50),
+                                     disabled=True)
+        self.plan_save_btn.bind(on_press=self._save_plan_html)
+        box.add_widget(self.plan_save_btn)
 
         scroll = ScrollView()
         self.plan_layout = GridLayout(cols=1, size_hint_y=None, spacing=6)
