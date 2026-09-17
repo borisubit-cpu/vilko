@@ -201,50 +201,6 @@ class MainApp(App):
                 row.add_widget(del_btn)
             self.recipes_layout.add_widget(row)
 
-    def _save_plan_html(self, instance):
-        plan = getattr(self, '_last_plan', None)
-        name = getattr(self, '_last_plan_recipe_name', None)
-        if not plan or not name:
-            info_popup('Нечего сохранять', 'Сначала сгенерируйте план.')
-            return
-        try:
-            path = self.logic.export_plan_to_html(plan, name)
-            info_popup('План сохранён',
-                       f"Файл: {path}\n\n(в папке с данными приложения)")
-        except Exception as e:
-            info_popup('Ошибка', str(e))
-
-    def _check_fermentation_notifications(self):
-        """Проверяет записи журнала на завершённое брожение и показывает попап."""
-        try:
-            notifications = self.logic.brew_log.check_fermentation_notifications()
-        except Exception as e:
-            print(f"Ошибка проверки брожения: {e}")
-            return
-
-        # Фильтруем те, о которых уже уведомляли
-        pending = []
-        for idx, name, dt_str in notifications:
-            entry = self.logic.brew_log.get_entry(idx)
-            if entry and not entry.get('notified'):
-                pending.append((idx, name, dt_str))
-
-        if not pending:
-            return
-
-        # Формируем текст уведомления
-        lines = [f"• {name}  (окончание: {dt_str})" for _, name, dt_str in pending]
-        text = "Брожение завершено. Пора проверять брагу:\n\n" + "\n".join(lines)
-
-        # Помечаем как уведомлённые, чтобы не спамить
-        for idx, _, _ in pending:
-            self.logic.brew_log.update_entry(idx, 'notified', True)
-
-        popup = Popup(title='Брожение завершено',
-                       content=Label(text=text, halign='left', valign='top'),
-                       size_hint=(0.85, 0.5))
-        popup.open()
-
     def _delete_custom_recipe(self, custom_idx):
         self.logic.delete_custom_recipe(custom_idx)
         self._refresh_recipes()
@@ -473,8 +429,8 @@ class MainApp(App):
         gen_btn = Button(text='Сгенерировать план', size_hint_y=None, height=dp(50))
         gen_btn.bind(on_press=self._generate_plan)
         box.add_widget(gen_btn)
-        
-       self.plan_save_btn = Button(text='Сохранить план в HTML',
+
+        self.plan_save_btn = Button(text='Сохранить план в HTML',
                                      size_hint_y=None, height=dp(50),
                                      disabled=True)
         self.plan_save_btn.bind(on_press=self._save_plan_html)
@@ -506,7 +462,7 @@ class MainApp(App):
                                                size_hint_y=None, height=dp(60)))
             return
 
-              # Запоминаем последний сгенерированный план и рецепт
+        # Запоминаем последний сгенерированный план и рецепт
         self._last_plan = plan
         self._last_plan_recipe_name = recipe['название']
         self.plan_save_btn.disabled = False
@@ -539,6 +495,47 @@ class MainApp(App):
             lbl.bind(texture_size=lambda inst, val: setattr(inst, 'height', val[1] + dp(10)))
             lbl.bind(width=lambda inst, val: setattr(inst, 'text_size', (val, None)))
             self.plan_layout.add_widget(lbl)
+
+    def _save_plan_html(self, instance):
+        plan = getattr(self, '_last_plan', None)
+        name = getattr(self, '_last_plan_recipe_name', None)
+        if not plan or not name:
+            info_popup('Нечего сохранять', 'Сначала сгенерируйте план.')
+            return
+        try:
+            path = self.logic.export_plan_to_html(plan, name)
+            info_popup('План сохранён',
+                       f"Файл: {path}\n\n(в папке с данными приложения)")
+        except Exception as e:
+            info_popup('Ошибка', str(e))
+
+    def _check_fermentation_notifications(self):
+        """Проверяет записи журнала на завершённое брожение и показывает попап."""
+        try:
+            notifications = self.logic.brew_log.check_fermentation_notifications()
+        except Exception as e:
+            print(f"Ошибка проверки брожения: {e}")
+            return
+
+        pending = []
+        for idx, name, dt_str in notifications:
+            entry = self.logic.brew_log.get_entry(idx)
+            if entry and not entry.get('notified'):
+                pending.append((idx, name, dt_str))
+
+        if not pending:
+            return
+
+        lines = [f"• {name}  (окончание: {dt_str})" for _, name, dt_str in pending]
+        text = "Брожение завершено. Пора проверять брагу:\n\n" + "\n".join(lines)
+
+        for idx, _, _ in pending:
+            self.logic.brew_log.update_entry(idx, 'notified', True)
+
+        popup = Popup(title='Брожение завершено',
+                       content=Label(text=text, halign='left', valign='top'),
+                       size_hint=(0.85, 0.5))
+        popup.open()
 
     # ==================== ЖУРНАЛ ====================
     def _build_log_tab(self):
@@ -596,7 +593,6 @@ class MainApp(App):
 
         box = BoxLayout(orientation='vertical', padding=12, spacing=8)
 
-        # --- Информация (только для чтения) ---
         info = Label(
             text=(f"Рецепт: {entry['recipe']}\n"
                   f"Дата создания: {entry['date']}\n"
@@ -606,13 +602,11 @@ class MainApp(App):
         info.bind(size=lambda inst, val: setattr(inst, 'text_size', (val[0], val[1])))
         box.add_widget(info)
 
-        # --- Заметки ---
         box.add_widget(Label(text='Заметки:', size_hint_y=None, height=dp(25)))
         notes_in = TextInput(text=entry.get('notes') or '', multiline=True,
                              size_hint_y=None, height=dp(90))
         box.add_widget(notes_in)
 
-        # --- Рейтинг: 1..5 ---
         box.add_widget(Label(text='Оценка рецепта (1 — плохо, 5 — отлично):',
                              size_hint_y=None, height=dp(25)))
         stars_row = BoxLayout(size_hint_y=None, height=dp(50), spacing=4)
@@ -641,7 +635,6 @@ class MainApp(App):
         refresh_buttons()
         box.add_widget(stars_row)
 
-        # --- Даты брожения ---
         box.add_widget(Label(text='Начало брожения (ГГГГ-ММ-ДД ЧЧ:ММ):',
                              size_hint_y=None, height=dp(25)))
         start_in = TextInput(text=entry.get('fermentation_start') or '',
@@ -656,7 +649,6 @@ class MainApp(App):
                            multiline=False, size_hint_y=None, height=dp(45))
         box.add_widget(end_in)
 
-        # --- Кнопка сохранения ---
         save_btn = Button(text='Сохранить изменения', size_hint_y=None, height=dp(50))
         box.add_widget(save_btn)
 
