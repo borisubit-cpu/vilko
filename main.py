@@ -115,7 +115,7 @@ class TimersTab(BoxLayout):
         return f"{h:02d}:{m:02d}:{s:02d}"
 
     def _notify(self, name):
-        popup = Popup(title='⏰ Время вышло!',
+        popup = Popup(title='Время вышло!',
                        content=Label(text=f"Таймер «{name}» завершён"),
                        size_hint=(0.75, 0.3))
         popup.open()
