@@ -554,32 +554,34 @@ class MainApp(App):
                              size_hint_y=None, height=dp(90))
         box.add_widget(notes_in)
 
-        # --- Рейтинг звёздочками ---
-        box.add_widget(Label(text='Оценка рецепта:', size_hint_y=None, height=dp(25)))
+                # --- Рейтинг: 1..5 ---
+        box.add_widget(Label(text='Оценка рецепта (1 — плохо, 5 — отлично):',
+                             size_hint_y=None, height=dp(25)))
         stars_row = BoxLayout(size_hint_y=None, height=dp(50), spacing=4)
 
         current = {'rating': entry.get('rating') or 0}
-        star_buttons = []
+        rating_buttons = []
 
-        def refresh_stars():
-            for i, b in enumerate(star_buttons, 1):
-                b.text = '★' if i <= current['rating'] else '☆'
+        def refresh_buttons():
+            for i, b in enumerate(rating_buttons, 1):
+                if i == current['rating']:
+                    b.background_color = (0.2, 0.7, 0.2, 1)  # зелёный для выбранной
+                else:
+                    b.background_color = (0.5, 0.5, 0.5, 1)  # серый для остальных
 
-        def make_star_handler(value):
+        def make_handler(value):
             def handler(inst):
                 current['rating'] = value
-                refresh_stars()
+                refresh_buttons()
             return handler
 
         for i in range(1, 6):
-            b = Button(text='☆', size_hint_x=None, width=dp(55))
-            b.bind(on_press=make_star_handler(i))
-            star_buttons.append(b)
+            b = Button(text=str(i), size_hint_x=None, width=dp(60))
+            b.bind(on_press=make_handler(i))
+            rating_buttons.append(b)
             stars_row.add_widget(b)
-        refresh_stars()
+        refresh_buttons()
         box.add_widget(stars_row)
-
-        # --- Даты брожения ---
         box.add_widget(Label(text='Начало брожения (ГГГГ-ММ-ДД ЧЧ:ММ):',
                              size_hint_y=None, height=dp(25)))
         start_in = TextInput(text=entry.get('fermentation_start') or '',
