@@ -520,8 +520,9 @@ class MainApp(App):
         for pos, entry in enumerate(entries):
             real_index = total - 1 - pos
             row = BoxLayout(size_hint_y=None, height=dp(40), spacing=4)
-            rating_stars = '★' * (entry.get('rating') or 0)
-            label_text = f"{entry['date']} | {entry['recipe']} {rating_stars}"
+                        rating = entry.get('rating')
+            rating_str = f" [{rating}/5]" if rating else ""
+            label_text = f"{entry['date']} | {entry['recipe']}{rating_str}"
             btn = Button(text=label_text)
             btn.bind(on_press=lambda x, idx=real_index: self._show_log_entry(idx))
             row.add_widget(btn)
