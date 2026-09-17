@@ -70,8 +70,8 @@ class TimersTab(BoxLayout):
         row = BoxLayout(size_hint_y=None, height=dp(50), spacing=4)
         label = Label(text=f"{name}: {self._fmt(total)}", halign='left', valign='middle')
         label.bind(size=lambda inst, val: setattr(inst, 'text_size', (val[0], val[1])))
-        pause_btn = Button(text='⏸', size_hint_x=None, width=dp(55))
-        del_btn = Button(text='✕', size_hint_x=None, width=dp(55))
+                pause_btn = Button(text='Пауза', size_hint_x=None, width=dp(80))
+        del_btn = Button(text='X', size_hint_x=None, width=dp(50))
 
         timer = {'name': name, 'remaining': total, 'running': True,
                  'label': label, 'row': row}
