@@ -200,6 +200,36 @@ class MainApp(App):
                 del_btn.bind(on_press=lambda x, ci=custom_idx: self._delete_custom_recipe(ci))
                 row.add_widget(del_btn)
             self.recipes_layout.add_widget(row)
+    def _check_fermentation_notifications(self):
+        """Проверяет записи журнала на завершённое брожение и показывает попап."""
+        try:
+            notifications = self.logic.brew_log.check_fermentation_notifications()
+        except Exception as e:
+            print(f"Ошибка проверки брожения: {e}")
+            return
+
+        # Фильтруем те, о которых уже уведомляли
+        pending = []
+        for idx, name, dt_str in notifications:
+            entry = self.logic.brew_log.get_entry(idx)
+            if entry and not entry.get('notified'):
+                pending.append((idx, name, dt_str))
+
+        if not pending:
+            return
+
+        # Формируем текст уведомления
+        lines = [f"• {name}  (окончание: {dt_str})" for _, name, dt_str in pending]
+        text = "Брожение завершено. Пора проверять брагу:\n\n" + "\n".join(lines)
+
+        # Помечаем как уведомлённые, чтобы не спамить
+        for idx, _, _ in pending:
+            self.logic.brew_log.update_entry(idx, 'notified', True)
+
+        popup = Popup(title='Брожение завершено',
+                       content=Label(text=text, halign='left', valign='top'),
+                       size_hint=(0.85, 0.5))
+        popup.open()
 
     def _delete_custom_recipe(self, custom_idx):
         self.logic.delete_custom_recipe(custom_idx)
