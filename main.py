@@ -169,7 +169,6 @@ class MainApp(App):
         tab_links.content = self._build_links_tab()
         self.root.add_widget(tab_links)
 
-        # Проверяем завершённое брожение через 2 секунды после запуска
         Clock.schedule_once(lambda dt: self._check_fermentation_notifications(), 2)
 
         return self.root
@@ -401,22 +400,27 @@ class MainApp(App):
     def _make_calc_heads_tab(self):
         item = TabbedPanelItem(text='Головы')
         box = BoxLayout(orientation='vertical', padding=10, spacing=10)
-        ac_input = TextInput(hint_text='Количество абсолютного спирта (мл)', multiline=False, size_hint_y=None, height=dp(50))
+        volume_input = TextInput(hint_text='Объём спирта-сырца (мл)', multiline=False, size_hint_y=None, height=dp(50))
+        strength_input = TextInput(hint_text='Крепость спирта-сырца (%)', multiline=False, size_hint_y=None, height=dp(50))
         percent_input = TextInput(text='10', hint_text='Процент отбора голов (%)', multiline=False, size_hint_y=None, height=dp(50))
-        result = Label(text='', size_hint_y=None, height=dp(60))
+        result = Label(text='', size_hint_y=None, height=dp(100))
 
         def calc(instance):
             try:
-                ac_ml = float(ac_input.text)
+                volume_ml = float(volume_input.text)
+                strength = float(strength_input.text)
                 percent = float(percent_input.text or 10)
+                ac_ml = volume_ml * strength / 100
                 heads_ml = ac_ml * percent / 100
-                result.text = f"Объём голов: {heads_ml:.0f} мл ({percent:.0f}% от {ac_ml:.0f} мл АС)"
+                result.text = (f"Абсолютный спирт: {ac_ml:.0f} мл\n"
+                               f"Объём голов: {heads_ml:.0f} мл ({percent:.0f}% от АС)")
             except Exception as e:
                 result.text = f"Ошибка: {e}"
 
         btn = Button(text='Рассчитать головы', size_hint_y=None, height=dp(50))
         btn.bind(on_press=calc)
-        box.add_widget(ac_input)
+        box.add_widget(volume_input)
+        box.add_widget(strength_input)
         box.add_widget(percent_input)
         box.add_widget(btn)
         box.add_widget(result)
@@ -924,8 +928,6 @@ class MainApp(App):
             ("Мой Telegram-канал", "https://t.me/vilko_zerno"),
             ("Форум «Самогонщики»", "https://forum.homedistiller.ru/"),
             ("Форум «АлкоФан»", "https://alkofan.com/"),
-            ("Форум «Гоним с нами»", "https://gonim-s-nami.ru/"),
-            ("Форум «Самогонный аппарат»", "https://samogonnyj-apparat.ru/forum/"),
         ]
         for name, url in links:
             btn = Button(text=name, size_hint_y=None, height=dp(50))
