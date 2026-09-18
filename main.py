@@ -155,7 +155,7 @@ class MainApp(App):
 
     def build(self):
         self.logic = GrainDistillingApp(data_dir=self.user_data_dir)
-        self.root = TabbedPanel()
+        self.root = BackgroundTabbedPanel()
         self.root.do_default_tab = False
 
         tabs = [
