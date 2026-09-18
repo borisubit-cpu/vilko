@@ -1,5 +1,8 @@
+name: Clean old build cache
+run: |
+   rm -rf .buildozer
+   rm -rf ~/.buildozer/cache
 name: Build APK
-
 on:
   push:
     branches: [ main ]
