@@ -8,8 +8,6 @@ from kivy.uix.tabbedpanel import TabbedPanel, TabbedPanelItem
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.popup import Popup
 from kivy.uix.spinner import Spinner
-from kivy.uix.floatlayout import FloatLayout
-from kivy.uix.image import Image
 from kivy.metrics import dp
 from kivy.clock import Clock
 from kivy.lang import Builder
@@ -44,6 +42,12 @@ Builder.load_string('''
     background_color: 0.20, 0.32, 0.26, 1
     color: 0.97, 0.91, 0.78, 1
     font_size: '14sp'
+    canvas.after:
+        Color:
+            rgba: 0.60, 0.72, 0.60, 1
+        Line:
+            rectangle: self.x, self.y, self.width, self.height
+            width: 1.2
 
 <Label>:
     color: 0.96, 0.92, 0.82, 1
@@ -58,6 +62,12 @@ Builder.load_string('''
     background_down: ''
     background_color: 0.20, 0.32, 0.26, 1
     color: 0.97, 0.91, 0.78, 1
+    canvas.after:
+        Color:
+            rgba: 0.60, 0.72, 0.60, 1
+        Line:
+            rectangle: self.x, self.y, self.width, self.height
+            width: 1.2
 ''')
 
 
@@ -181,8 +191,25 @@ class MainApp(App):
         tab_timers.content = TimersTab()
         self.root.add_widget(tab_timers)
 
+        # Обёртка с подсказкой о свайпе
+        wrapper = BoxLayout(orientation='vertical')
+        hint = Label(
+            text="<< листайте вкладки вбок — там ещё разделы >>",
+            size_hint_y=None, height=dp(26),
+            color=(0.96, 0.80, 0.35, 1),
+            font_size='13sp')
+        wrapper.add_widget(hint)
+        wrapper.add_widget(self.root)
+
+        def hide_hint(dt):
+            try:
+                wrapper.remove_widget(hint)
+            except Exception:
+                pass
+        Clock.schedule_once(hide_hint, 6)
+
         Clock.schedule_once(lambda dt: self._check_fermentation_notifications(), 2)
-        return self.root
+        return wrapper
 
     # ==================== РЕЦЕПТЫ ====================
     def _build_recipes_tab(self):
@@ -297,6 +324,7 @@ class MainApp(App):
         outer.add_widget(self._make_calc_enzymes_tab())
         outer.add_widget(self._make_calc_yeast_tab())
         outer.add_widget(self._make_calc_heads_tab())
+        outer.add_widget(self._make_calc_dilute_tab())
         return outer
 
     def _make_calc_yield_tab(self):
@@ -403,6 +431,43 @@ class MainApp(App):
         b = Button(text='Рассчитать головы', size_hint_y=None, height=dp(50))
         b.bind(on_press=calc)
         for w in (vi, si, pi, b, res):
+            box.add_widget(w)
+        item.content = box
+        return item
+
+    def _make_calc_dilute_tab(self):
+        item = TabbedPanelItem(text='Разбавление')
+        box = BoxLayout(orientation='vertical', padding=10, spacing=10)
+        v_in = TextInput(hint_text='Объём самогона (л)', multiline=False, size_hint_y=None, height=dp(50))
+        abv_in = TextInput(hint_text='Начальная крепость (%)', multiline=False, size_hint_y=None, height=dp(50))
+        target_in = TextInput(hint_text='Желаемая крепость (%)', multiline=False, size_hint_y=None, height=dp(50))
+        dil_in = TextInput(text='0', hint_text='Крепость разбавителя (%, 0 — вода)',
+                            multiline=False, size_hint_y=None, height=dp(50))
+        res = Label(text='', size_hint_y=None, height=dp(100))
+
+        def calc(inst):
+            try:
+                v1 = float(v_in.text)
+                abv1 = float(abv_in.text)
+                abv2 = float(target_in.text)
+                abv_dil = float(dil_in.text or 0)
+                if abv2 <= abv_dil:
+                    res.text = "Желаемая крепость должна быть больше крепости разбавителя"
+                    return
+                if abv2 > abv1:
+                    res.text = "Желаемая крепость не может быть выше начальной"
+                    return
+                v_dil = v1 * (abv1 - abv2) / (abv2 - abv_dil)
+                total = v1 + v_dil
+                res.text = (f"Объём разбавителя: {v_dil:.2f} л\n"
+                             f"Итоговый объём: {total:.2f} л\n"
+                             f"Крепость итога: {abv2:.1f}%")
+            except Exception as e:
+                res.text = f"Ошибка: {e}"
+
+        b = Button(text='Рассчитать разбавление', size_hint_y=None, height=dp(50))
+        b.bind(on_press=calc)
+        for w in (v_in, abv_in, target_in, dil_in, b, res):
             box.add_widget(w)
         item.content = box
         return item
@@ -885,7 +950,7 @@ class MainApp(App):
             "[b][size=20]Зерновой Мастер — инструкция[/size][/b]\n\n"
             "[b][size=16]Разделы приложения[/size][/b]\n"
             "• [b]Рецепты[/b] — 20 встроенных рецептов + свои\n"
-            "• [b]Калькуляторы[/b] — выход, вода, ферменты, дрожжи, головы\n"
+            "• [b]Калькуляторы[/b] — выход, вода, ферменты, дрожжи, головы, разбавление\n"
             "• [b]План варки[/b] — план с редактированием параметров\n"
             "• [b]Журнал[/b] — заметки, оценки, даты брожения\n"
             "• [b]Статистика[/b] — сводка по рецептам\n"
@@ -893,6 +958,10 @@ class MainApp(App):
             "• [b]Дрожжи[/b] — база с характеристиками\n"
             "• [b]Помощь[/b] — быстрые ответы\n"
             "• [b]Ссылки[/b] — Telegram и форумы\n\n"
+            "[b][size=16]Калькулятор разбавления[/size][/b]\n"
+            "Введите объём самогона, его крепость, желаемую крепость\n"
+            "и крепость разбавителя (0 — вода). Программа посчитает,\n"
+            "сколько нужно добавить и какой получится итог.\n\n"
             "[b][size=16]Генерация плана[/size][/b]\n"
             "1. Откройте «План варки», выберите рецепт\n"
             "2. Нажмите «Сгенерировать план»\n"
