@@ -26,12 +26,6 @@ Window.clearcolor = (0.96, 0.92, 0.82, 1)
 
 # ==================== СТИЛЬ ====================
 Builder.load_string('''
-<TabbedPanel>:
-    background_normal: ''
-    background_down: ''
-    background_color: 0, 0, 0, 0
-    border: [0, 0, 0, 0]
-    tab_width: 140
 
 <TabbedPanelHeader>:
     background_normal: ''
@@ -46,9 +40,6 @@ Builder.load_string('''
     background_color: 0.20, 0.32, 0.26, 1
     color: 0.97, 0.91, 0.78, 1
 
-<TabbedPanelContent>:
-    background_color: 0, 0, 0, 0
-
 <Button>:
     background_normal: ''
     background_down: ''
@@ -57,7 +48,7 @@ Builder.load_string('''
     font_size: '14sp'
 
 <Label>:
-    color: 0.15, 0.10, 0.05, 1
+    color: 0.96, 0.92, 0.82, 1
 
 <TextInput>:
     background_color: 0.99, 0.96, 0.88, 1
