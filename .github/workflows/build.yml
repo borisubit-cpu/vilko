@@ -9,9 +9,11 @@ jobs:
   build-android:
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
@@ -24,6 +26,13 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install buildozer cython==0.29.33
+
+      - name: Pre-accept Android SDK licenses
+        run: |
+          mkdir -p ~/.android
+          touch ~/.android/repositories.cfg
+          yes | sdkmanager --licenses || true
+        continue-on-error: true
 
       - name: Show spec before build
         run: |
