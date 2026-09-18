@@ -553,7 +553,7 @@ class MainApp(App):
         summary = Label(text="\n".join(summary_lines),
                          size_hint_y=None, height=dp(110),
                          halign='left', valign='top',
-                         color=(0.05, 0.25, 0.50, 1))
+                         color=(0.90, 0.71, 0.13, 1))
         summary.bind(size=lambda inst, val: setattr(inst, 'text_size', (val[0], val[1])))
         self.plan_layout.add_widget(summary)
         try:
@@ -575,9 +575,9 @@ class MainApp(App):
                 self._refresh_log()
             except Exception:
                 pass
-            note = Label(text="Запись добавлена в журнал",
+        note = Label(text="Запись добавлена в журнал",
                           size_hint_y=None, height=dp(30),
-                          color=(0.10, 0.45, 0.15, 1))
+                          color=(0.45, 0.90, 0.50, 1))
             self.plan_layout.add_widget(note)
         except Exception as e:
             print(f"Не удалось записать в журнал: {e}")
