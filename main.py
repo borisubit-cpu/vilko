@@ -27,7 +27,46 @@ def info_popup(title, message):
     popup.open()
     return popup
 
+# ==================== СТИЛЬ ====================
 
+Builder.load_string('''
+<Button>:
+    background_normal: ''
+    background_down: ''
+    background_color: 0.18, 0.30, 0.24, 1
+    color: 0.96, 0.90, 0.78, 1
+    font_size: '15sp'
+
+<Label>:
+    color: 0.20, 0.14, 0.08, 1
+
+<TextInput>:
+    background_color: 0.97, 0.92, 0.82, 1
+    foreground_color: 0.18, 0.12, 0.06, 1
+
+<TabbedPanelItem>:
+    background_color: 0.18, 0.30, 0.24, 1
+    color: 0.96, 0.90, 0.78, 1
+''')
+
+
+class BackgroundTabbedPanel(TabbedPanel):
+    """TabbedPanel с фоновым изображением под всеми вкладками."""
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        try:
+            bg = CoreImage('bg.png').texture
+        except Exception:
+            bg = None
+        with self.canvas.before:
+            GColor(1, 1, 1, 1)
+            self._bg_rect = Rectangle(texture=bg, pos=self.pos, size=self.size)
+        self.bind(pos=self._update_bg, size=self._update_bg)
+
+    def _update_bg(self, *args):
+        self._bg_rect.pos = self.pos
+        self._bg_rect.size = self.size
 class TimersTab(BoxLayout):
     def __init__(self, **kwargs):
         super().__init__(orientation='vertical', padding=10, spacing=8, **kwargs)
@@ -214,7 +253,7 @@ class MainApp(App):
         box.add_widget(save_btn)
         popup = Popup(title='Новый рецепт', content=box, size_hint=(0.9, 0.9))
 
-        def save(instance):
+    def save(instance):
             name = name_in.text.strip()
             if not name:
                 info_popup('Ошибка', 'Введите название')
