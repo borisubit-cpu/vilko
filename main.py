@@ -13,29 +13,20 @@ from kivy.clock import Clock
 from kivy.lang import Builder
 from kivy.graphics import Rectangle, Color as GColor
 from kivy.core.image import Image as CoreImage
+
 from grain_logic import GrainDistillingApp
 
 GRAIN_DISPLAY_NAMES = ['Пшеница', 'Ячмень', 'Рожь', 'Кукуруза', 'Овёс', 'Гречка']
 GRAIN_KEY_MAP = {'Пшеница': 'пшеница', 'Ячмень': 'ячмень', 'Рожь': 'рожь',
                   'Кукуруза': 'кукуруза', 'Овёс': 'овёс', 'Гречка': 'гречка'}
 
-
-def info_popup(title, message):
-    popup = Popup(title=title,
-                   content=Label(text=message, halign='left', valign='top'),
-                   size_hint=(0.85, 0.6))
-    popup.open()
-    return popup
-
 # ==================== СТИЛЬ ====================
-
 Builder.load_string('''
 <Button>:
     background_normal: ''
     background_down: ''
     background_color: 0.18, 0.30, 0.24, 1
     color: 0.96, 0.90, 0.78, 1
-    font_size: '15sp'
 
 <Label>:
     color: 0.20, 0.14, 0.08, 1
@@ -44,15 +35,16 @@ Builder.load_string('''
     background_color: 0.97, 0.92, 0.82, 1
     foreground_color: 0.18, 0.12, 0.06, 1
 
-<TabbedPanelItem>:
+<Spinner>:
+    background_normal: ''
+    background_down: ''
     background_color: 0.18, 0.30, 0.24, 1
     color: 0.96, 0.90, 0.78, 1
 ''')
 
 
 class BackgroundTabbedPanel(TabbedPanel):
-    """TabbedPanel с фоновым изображением под всеми вкладками."""
-
+    """TabbedPanel с фоновым изображением bg.png."""
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         try:
@@ -67,6 +59,16 @@ class BackgroundTabbedPanel(TabbedPanel):
     def _update_bg(self, *args):
         self._bg_rect.pos = self.pos
         self._bg_rect.size = self.size
+
+
+def info_popup(title, message):
+    popup = Popup(title=title,
+                   content=Label(text=message, halign='left', valign='top'),
+                   size_hint=(0.85, 0.6))
+    popup.open()
+    return popup
+
+
 class TimersTab(BoxLayout):
     def __init__(self, **kwargs):
         super().__init__(orientation='vertical', padding=10, spacing=8, **kwargs)
@@ -244,7 +246,7 @@ class MainApp(App):
         amount_in = TextInput(hint_text='Количество зерна (кг)', multiline=False, size_hint_y=None, height=dp(45))
         hydro_in = TextInput(text='1:4', hint_text='Гидромодуль', multiline=False, size_hint_y=None, height=dp(45))
         yeast_in = TextInput(text='спиртовые', hint_text='Тип дрожжей', multiline=False, size_hint_y=None, height=dp(45))
-        temp_in = TextInput(text='25', hint_text='Температура брожения (°C)', multiline=False, size_hint_y=None, height=dp(45))
+        temp_in = TextInput(text='25', hint_text='Температура (°C)', multiline=False, size_hint_y=None, height=dp(45))
         time_in = TextInput(text='5-7 дней', hint_text='Время брожения', multiline=False, size_hint_y=None, height=dp(45))
         desc_in = TextInput(hint_text='Описание', multiline=True, size_hint_y=None, height=dp(70))
         for w in (name_in, grain_spinner, amount_in, hydro_in, yeast_in, temp_in, time_in, desc_in):
@@ -253,7 +255,7 @@ class MainApp(App):
         box.add_widget(save_btn)
         popup = Popup(title='Новый рецепт', content=box, size_hint=(0.9, 0.9))
 
-    def save(instance):
+        def save(instance):
             name = name_in.text.strip()
             if not name:
                 info_popup('Ошибка', 'Введите название')
@@ -410,16 +412,13 @@ class MainApp(App):
         self.plan_spinner = Spinner(size_hint_y=None, height=dp(50))
         self._refresh_plan_spinner()
         box.add_widget(self.plan_spinner)
-
         gen_btn = Button(text='Сгенерировать план', size_hint_y=None, height=dp(50))
         gen_btn.bind(on_press=self._generate_plan)
         box.add_widget(gen_btn)
-
         self.plan_save_btn = Button(text='Сохранить план в HTML',
                                      size_hint_y=None, height=dp(50), disabled=True)
         self.plan_save_btn.bind(on_press=self._save_plan_html)
         box.add_widget(self.plan_save_btn)
-
         scroll = ScrollView()
         self.plan_layout = GridLayout(cols=1, size_hint_y=None, spacing=6)
         self.plan_layout.bind(minimum_height=self.plan_layout.setter('height'))
@@ -442,12 +441,11 @@ class MainApp(App):
 
     def _open_edit_recipe_dialog(self, recipe):
         box = BoxLayout(orientation='vertical', padding=10, spacing=6)
-
         source_text = "Исходный состав: " + ", ".join(
             f"{g} {a} кг" for g, a in recipe['зерно'].items())
         box.add_widget(Label(text=source_text, size_hint_y=None, height=dp(40)))
-
         total_grain_original = sum(recipe['зерно'].values())
+
         box.add_widget(Label(text='Общее количество зерна (кг):', size_hint_y=None, height=dp(25)))
         grain_in = TextInput(text=str(total_grain_original), multiline=False,
                               input_filter='float', size_hint_y=None, height=dp(45))
@@ -466,8 +464,7 @@ class MainApp(App):
         def recalc(*args):
             try:
                 total_grain = float(grain_in.text)
-                ratio_str = hydro_in.text.strip()
-                ratio = float(ratio_str.split(':')[1])
+                ratio = float(hydro_in.text.strip().split(':')[1])
                 water = total_grain * ratio
                 scale = total_grain / total_grain_original if total_grain_original > 0 else 0
                 scaled = {g: round(a * scale, 2) for g, a in recipe['зерно'].items()}
@@ -519,12 +516,10 @@ class MainApp(App):
 
     def _build_and_show_plan(self, recipe):
         self.plan_layout.clear_widgets()
-
         water = self.logic.calculate_water_volume(recipe)
         enzymes = self.logic.calculate_enzymes(recipe['зерно'])
         ac_yield = sum(self.logic.grain_base.get(g, {}).get('выход_спирта', 0) * a
                         for g, a in recipe['зерно'].items())
-
         summary_lines = [
             f"Зерно: {sum(recipe['зерно'].values()):.1f} кг",
             f"Вода: {water:.1f} л",
@@ -537,18 +532,15 @@ class MainApp(App):
                          color=(0.1, 0.4, 0.8, 1))
         summary.bind(size=lambda inst, val: setattr(inst, 'text_size', (val[0], val[1])))
         self.plan_layout.add_widget(summary)
-
         try:
             plan = self.logic.generate_plan(recipe)
         except Exception as e:
             self.plan_layout.add_widget(Label(text=f"Ошибка плана: {e}",
                                                 size_hint_y=None, height=dp(60)))
             return
-
         self._last_plan = plan
         self._last_plan_recipe_name = recipe['название']
         self.plan_save_btn.disabled = False
-
         try:
             self.logic.brew_log.add_entry(
                 recipe_name=recipe['название'],
@@ -565,7 +557,6 @@ class MainApp(App):
             self.plan_layout.add_widget(note)
         except Exception as e:
             print(f"Не удалось записать в журнал: {e}")
-
         for step in plan:
             text = f"День {step['день']} | {step['этап']}\n{step['действие']}\nВремя: {step['время']}"
             lbl = Label(text=text, size_hint_y=None, halign='left', valign='top')
@@ -714,7 +705,7 @@ class MainApp(App):
                 self.logic.brew_log.set_fermentation_end(index, end_in.text.strip())
             popup.dismiss()
             self._refresh_log()
-            info_popup('Сохранено', f"Запись обновлена")
+            info_popup('Сохранено', "Запись обновлена")
 
         save_btn.bind(on_press=save)
         popup.open()
@@ -891,42 +882,26 @@ class MainApp(App):
     def _instruction_text(self):
         return (
             "[b][size=20]Зерновой Мастер — инструкция[/size][/b]\n\n"
-
             "[b][size=16]Разделы приложения[/size][/b]\n"
-            "• [b]Рецепты[/b] — 20 встроенных рецептов + добавление своих\n"
-            "• [b]Калькуляторы[/b] — выход спирта, вода, ферменты, дрожжи, головы\n"
-            "• [b]План варки[/b] — пошаговый план с редактированием параметров\n"
+            "• [b]Рецепты[/b] — 20 встроенных рецептов + свои\n"
+            "• [b]Калькуляторы[/b] — выход, вода, ферменты, дрожжи, головы\n"
+            "• [b]План варки[/b] — план с редактированием параметров\n"
             "• [b]Журнал[/b] — заметки, оценки, даты брожения\n"
-            "• [b]Статистика[/b] — сводка по рецептам, оценкам, месяцам\n"
-            "• [b]Таймеры[/b] — несколько параллельных таймеров\n"
+            "• [b]Статистика[/b] — сводка по рецептам\n"
+            "• [b]Таймеры[/b] — параллельные таймеры\n"
             "• [b]Дрожжи[/b] — база с характеристиками\n"
             "• [b]Помощь[/b] — быстрые ответы\n"
             "• [b]Ссылки[/b] — Telegram и форумы\n\n"
-
-            "[b][size=16]Генерация плана варки (важно!)[/size][/b]\n"
+            "[b][size=16]Генерация плана[/size][/b]\n"
             "1. Откройте «План варки», выберите рецепт\n"
-            "2. Нажмите «Сгенерировать план» — откроется окно «Параметры варки»\n"
-            "3. Измените количество зерна и/или гидромодуль под свои условия\n"
-            "4. Программа [b]мгновенно пересчитает[/b]:\n"
-            "    - объём воды\n"
-            "    - количество ферментов\n"
-            "    - ожидаемый выход абсолютного спирта\n"
-            "5. Нажмите «Сгенерировать план» — план появится с расчётными данными\n"
-            "6. Запись автоматически попадёт в Журнал\n"
-            "7. Кнопкой «Сохранить план в HTML» можно выгрузить план в файл\n\n"
-
-            "[b][size=16]Журнал и уведомления[/size][/b]\n"
-            "• Нажмите на запись — откроется редактор (заметки, оценка, даты)\n"
-            "• Укажите дату окончания брожения в формате ГГГГ-ММ-ДД ЧЧ:ММ\n"
-            "• При следующем запуске приложение напомнит о завершённом брожении\n\n"
-
-            "[b][size=16]Советы[/size][/b]\n"
-            "• Используйте Таймеры для контроля пауз осахаривания\n"
-            "• Дрожжи выбирайте по температуре и типу зерна\n"
-            "• Статистика покажет, какие рецепты у вас в почёте\n\n"
-
-            "[color=#b8860b][b]Внимание:[/b] Соблюдайте законодательство вашей страны "
-            "в отношении производства алкогольных напитков.[/color]"
+            "2. Нажмите «Сгенерировать план»\n"
+            "3. Измените зерно и/или гидромодуль\n"
+            "4. Программа пересчитает воду, ферменты и выход\n"
+            "5. Нажмите «Сгенерировать план» — план и запись в журнал\n\n"
+            "[b][size=16]Уведомления[/size][/b]\n"
+            "• Укажите дату окончания брожения в журнале\n"
+            "• При следующем запуске будет напоминание\n\n"
+            "[color=#b8860b][b]Внимание:[/b] Соблюдайте законодательство вашей страны.[/color]"
         )
 
     def _save_instruction_html(self, instance):
