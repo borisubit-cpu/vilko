@@ -110,7 +110,7 @@ class TimersTab(BoxLayout):
 
 
 class MainApp(App):
-    title = "Grain Master"
+    title = "Зерновой Мастер"
 
     def build(self):
         self.logic = GrainDistillingApp(data_dir=self.user_data_dir)
