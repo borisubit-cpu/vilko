@@ -21,12 +21,10 @@ GRAIN_DISPLAY_NAMES = ['Пшеница', 'Ячмень', 'Рожь', 'Кукур
 GRAIN_KEY_MAP = {'Пшеница': 'пшеница', 'Ячмень': 'ячмень', 'Рожь': 'рожь',
                   'Кукуруза': 'кукуруза', 'Овёс': 'овёс', 'Гречка': 'гречка'}
 
-# Базовый фон окна — кремовый
-Window.clearcolor = (0.96, 0.92, 0.82, 1)
+Window.clearcolor = (0.15, 0.15, 0.15, 1)
 
 # ==================== СТИЛЬ ====================
 Builder.load_string('''
-
 <TabbedPanelHeader>:
     background_normal: ''
     background_down: ''
@@ -160,27 +158,8 @@ class MainApp(App):
     def build(self):
         self.logic = GrainDistillingApp(data_dir=self.user_data_dir)
 
-        # Корневой контейнер — FloatLayout, чтобы фон был ПОД всем
-        root = FloatLayout()
-
-        # Фоновая картинка (полупрозрачная)
-        bg = Image(source='bg.png',
-                    allow_stretch=True,
-                    keep_ratio=False,
-                    size_hint=(1, 1),
-                    pos_hint={'x': 0, 'y': 0},
-                    opacity=0.55)
-        root.add_widget(bg)
-
-        # Поверх фона — полупрозрачная кремовая подложка для читаемости
-        overlay = Image(source='bg.png', color=(1, 1, 1, 0.0001))
-        # (заглушка, просто чтобы не путаться; при желании можно убрать)
-
-        # TabbedPanel прозрачный
         self.root = TabbedPanel()
         self.root.do_default_tab = False
-        self.root.size_hint = (1, 1)
-        self.root.pos_hint = {'x': 0, 'y': 0}
 
         tabs = [
             ('Рецепты', self._build_recipes_tab),
@@ -202,10 +181,8 @@ class MainApp(App):
         tab_timers.content = TimersTab()
         self.root.add_widget(tab_timers)
 
-        root.add_widget(self.root)
-
         Clock.schedule_once(lambda dt: self._check_fermentation_notifications(), 2)
-        return root
+        return self.root
 
     # ==================== РЕЦЕПТЫ ====================
     def _build_recipes_tab(self):
@@ -481,7 +458,7 @@ class MainApp(App):
         box.add_widget(hydro_in)
 
         calc_label = Label(text='', size_hint_y=None, height=dp(130),
-                            halign='left', valign='top')
+                            halign='left', valign='top', color=(0.90, 0.71, 0.13, 1))
         calc_label.bind(size=lambda inst, val: setattr(inst, 'text_size', (val[0], val[1])))
         box.add_widget(calc_label)
 
@@ -575,7 +552,7 @@ class MainApp(App):
                 self._refresh_log()
             except Exception:
                 pass
-        note = Label(text="Запись добавлена в журнал",
+            note = Label(text="Запись добавлена в журнал",
                           size_hint_y=None, height=dp(30),
                           color=(0.45, 0.90, 0.50, 1))
             self.plan_layout.add_widget(note)
