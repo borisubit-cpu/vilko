@@ -10,7 +10,9 @@ from kivy.uix.popup import Popup
 from kivy.uix.spinner import Spinner
 from kivy.metrics import dp
 from kivy.clock import Clock
-
+from kivy.lang import Builder
+from kivy.graphics import Rectangle, Color as GColor
+from kivy.core.image import Image as CoreImage
 from grain_logic import GrainDistillingApp
 
 GRAIN_DISPLAY_NAMES = ['Пшеница', 'Ячмень', 'Рожь', 'Кукуруза', 'Овёс', 'Гречка']
