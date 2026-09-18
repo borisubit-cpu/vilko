@@ -1,10 +1,14 @@
 [app]
-title = Vilko
-package.name = vilko
-package.domain = org.vilko
+title = Зерновой Мастер
+package.name = grainmaster
+package.domain = com.grainmaster
 source.dir = .
-source.include_exts = py,png,jpg,kv,atlas
+source.include_exts = py,png,jpg,jpeg,kv,json
 version = 1.0
+requirements = python3,kivy
+orientation = portrait
+fullscreen = 0
+icon.filename = %(source.dir)s/icon.png
 
 # Явно указываем совместимые версии Python (hostpython3 и python3 должны совпадать)
 requirements = python3==3.13.9,hostpython3==3.13.9,kivy==2.3.1,openssl,sqlite3,pyjnius,android,setuptools,certifi,chardet,idna,requests,urllib3
