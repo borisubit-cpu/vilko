@@ -8,11 +8,12 @@ from kivy.uix.tabbedpanel import TabbedPanel, TabbedPanelItem
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.popup import Popup
 from kivy.uix.spinner import Spinner
+from kivy.uix.floatlayout import FloatLayout
+from kivy.uix.image import Image
 from kivy.metrics import dp
 from kivy.clock import Clock
 from kivy.lang import Builder
-from kivy.graphics import Rectangle, Color as GColor
-from kivy.core.image import Image as CoreImage
+from kivy.core.window import Window
 
 from grain_logic import GrainDistillingApp
 
@@ -20,45 +21,55 @@ GRAIN_DISPLAY_NAMES = ['Пшеница', 'Ячмень', 'Рожь', 'Кукур
 GRAIN_KEY_MAP = {'Пшеница': 'пшеница', 'Ячмень': 'ячмень', 'Рожь': 'рожь',
                   'Кукуруза': 'кукуруза', 'Овёс': 'овёс', 'Гречка': 'гречка'}
 
+# Базовый фон окна — кремовый
+Window.clearcolor = (0.96, 0.92, 0.82, 1)
+
 # ==================== СТИЛЬ ====================
 Builder.load_string('''
+<TabbedPanel>:
+    background_normal: ''
+    background_down: ''
+    background_color: 0, 0, 0, 0
+    border: [0, 0, 0, 0]
+    tab_width: 140
+
+<TabbedPanelHeader>:
+    background_normal: ''
+    background_down: ''
+    background_color: 0.20, 0.32, 0.26, 1
+    color: 0.97, 0.91, 0.78, 1
+    border: [0, 0, 0, 0]
+
+<TabbedPanelItem>:
+    background_normal: ''
+    background_down: ''
+    background_color: 0.20, 0.32, 0.26, 1
+    color: 0.97, 0.91, 0.78, 1
+
+<TabbedPanelContent>:
+    background_color: 0, 0, 0, 0
+
 <Button>:
     background_normal: ''
     background_down: ''
-    background_color: 0.18, 0.30, 0.24, 1
-    color: 0.96, 0.90, 0.78, 1
+    background_color: 0.20, 0.32, 0.26, 1
+    color: 0.97, 0.91, 0.78, 1
+    font_size: '14sp'
 
 <Label>:
-    color: 0.20, 0.14, 0.08, 1
+    color: 0.15, 0.10, 0.05, 1
 
 <TextInput>:
-    background_color: 0.97, 0.92, 0.82, 1
-    foreground_color: 0.18, 0.12, 0.06, 1
+    background_color: 0.99, 0.96, 0.88, 1
+    foreground_color: 0.15, 0.10, 0.05, 1
+    cursor_color: 0.20, 0.32, 0.26, 1
 
 <Spinner>:
     background_normal: ''
     background_down: ''
-    background_color: 0.18, 0.30, 0.24, 1
-    color: 0.96, 0.90, 0.78, 1
+    background_color: 0.20, 0.32, 0.26, 1
+    color: 0.97, 0.91, 0.78, 1
 ''')
-
-
-class BackgroundTabbedPanel(TabbedPanel):
-    """TabbedPanel с фоновым изображением bg.png."""
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        try:
-            bg = CoreImage('bg.png').texture
-        except Exception:
-            bg = None
-        with self.canvas.before:
-            GColor(1, 1, 1, 1)
-            self._bg_rect = Rectangle(texture=bg, pos=self.pos, size=self.size)
-        self.bind(pos=self._update_bg, size=self._update_bg)
-
-    def _update_bg(self, *args):
-        self._bg_rect.pos = self.pos
-        self._bg_rect.size = self.size
 
 
 def info_popup(title, message):
@@ -157,8 +168,28 @@ class MainApp(App):
 
     def build(self):
         self.logic = GrainDistillingApp(data_dir=self.user_data_dir)
-        self.root = BackgroundTabbedPanel()
+
+        # Корневой контейнер — FloatLayout, чтобы фон был ПОД всем
+        root = FloatLayout()
+
+        # Фоновая картинка (полупрозрачная)
+        bg = Image(source='bg.png',
+                    allow_stretch=True,
+                    keep_ratio=False,
+                    size_hint=(1, 1),
+                    pos_hint={'x': 0, 'y': 0},
+                    opacity=0.55)
+        root.add_widget(bg)
+
+        # Поверх фона — полупрозрачная кремовая подложка для читаемости
+        overlay = Image(source='bg.png', color=(1, 1, 1, 0.0001))
+        # (заглушка, просто чтобы не путаться; при желании можно убрать)
+
+        # TabbedPanel прозрачный
+        self.root = TabbedPanel()
         self.root.do_default_tab = False
+        self.root.size_hint = (1, 1)
+        self.root.pos_hint = {'x': 0, 'y': 0}
 
         tabs = [
             ('Рецепты', self._build_recipes_tab),
@@ -180,8 +211,10 @@ class MainApp(App):
         tab_timers.content = TimersTab()
         self.root.add_widget(tab_timers)
 
+        root.add_widget(self.root)
+
         Clock.schedule_once(lambda dt: self._check_fermentation_notifications(), 2)
-        return self.root
+        return root
 
     # ==================== РЕЦЕПТЫ ====================
     def _build_recipes_tab(self):
@@ -529,7 +562,7 @@ class MainApp(App):
         summary = Label(text="\n".join(summary_lines),
                          size_hint_y=None, height=dp(110),
                          halign='left', valign='top',
-                         color=(0.1, 0.4, 0.8, 1))
+                         color=(0.05, 0.25, 0.50, 1))
         summary.bind(size=lambda inst, val: setattr(inst, 'text_size', (val[0], val[1])))
         self.plan_layout.add_widget(summary)
         try:
@@ -553,7 +586,7 @@ class MainApp(App):
                 pass
             note = Label(text="Запись добавлена в журнал",
                           size_hint_y=None, height=dp(30),
-                          color=(0.2, 0.7, 0.2, 1))
+                          color=(0.10, 0.45, 0.15, 1))
             self.plan_layout.add_widget(note)
         except Exception as e:
             print(f"Не удалось записать в журнал: {e}")
