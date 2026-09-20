@@ -44,6 +44,14 @@ jobs:
           echo "33b6a2b64607f11b759f320ef9dff4ae5c47d97a" > $SDK_DIR/licenses/google-gdk-license
           echo "d975f751698a77b662f1254ddbeed3901e976f5a" > $SDK_DIR/licenses/intel-android-extra-license
 
+      - name: Generate release keystore
+        run: |
+          keytool -genkey -v -keystore $HOME/release.keystore \
+            -alias grainmaster -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass grainmaster123 -keypass grainmaster123 \
+            -dname "CN=GrainMaster, OU=Dev, O=GrainMaster, L=Moscow, S=Moscow, C=RU"
+          echo "Keystore created"
+
       - name: Clean old build cache
         run: |
           rm -rf .buildozer
@@ -52,17 +60,21 @@ jobs:
       - name: Show spec before build
         run: cat buildozer.spec
 
-      - name: Build APK
+      - name: Build Release APK
         env:
           JAVA_HOME: /usr/lib/jvm/temurin-17-jdk-amd64
+          P4A_RELEASE_KEYSTORE: /home/runner/release.keystore
+          P4A_RELEASE_KEYSTORE_PASSWD: grainmaster123
+          P4A_RELEASE_KEYALIAS: grainmaster
+          P4A_RELEASE_KEYALIAS_PASSWD: grainmaster123
         run: |
-          buildozer android debug
+          buildozer android release
         timeout-minutes: 300
 
       - name: Upload APK
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: grainmaster-apk
+          name: grainmaster-release-apk
           path: bin/*.apk
           if-no-files-found: error
