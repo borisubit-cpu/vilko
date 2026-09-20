@@ -14,6 +14,8 @@ android.accept_sdk_license = True
 android.ndk = 25b
 android.api = 31
 android.minapi = 21
+android.release_artifact = apk
+android.debug_artifact = apk
 
 [buildozer]
 log_level = 2
