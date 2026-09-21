@@ -20,10 +20,10 @@ jobs:
           sudo apt update
           sudo apt install -y git zip unzip openjdk-17-jdk autoconf libtool pkg-config zlib1g-dev libncurses-dev cmake libffi-dev libssl-dev build-essential ccache wget
 
-      - name: Install Buildozer (pinned pip for p4a develop)
+      - name: Install Buildozer
         run: |
-          pip install "pip==22.3.1" setuptools wheel
-          pip install buildozer cython==0.29.36
+          pip install --upgrade pip
+          pip install buildozer cython==0.29.33
 
       - name: Pre-install Android cmdline-tools and accept licenses
         run: |
@@ -44,19 +44,10 @@ jobs:
           echo "33b6a2b64607f11b759f320ef9dff4ae5c47d97a" > $SDK_DIR/licenses/google-gdk-license
           echo "d975f751698a77b662f1254ddbeed3901e976f5a" > $SDK_DIR/licenses/intel-android-extra-license
 
-      - name: Disable git recursive submodules (workaround for 403)
-        run: |
-          git config --global submodule.recurse false
-          git config --global fetch.recurseSubmodules false
-          git config --global clone.recurseSubmodules false
-
       - name: Clean old build cache
         run: |
           rm -rf .buildozer
           rm -rf ~/.buildozer/cache
-
-      - name: Show spec before build
-        run: cat buildozer.spec
 
       - name: Build APK
         env:
